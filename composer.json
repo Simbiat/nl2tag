@@ -1,0 +1,28 @@
+{
+    "name": "simbiat/nl2tag",
+    "type": "library",
+    "keywords": ["nl2p","php","html", "nl2br"],
+    "description": "Class to convert new lines to different HTML tags",
+    "homepage": "https://github.com/Simbiat/nl2tag",
+    "license": "AGPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "Dmitry Kustov",
+            "email": "simbiat@outlook.com",
+            "homepage": "https://www.simbiat.dev",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8"
+    },
+    "autoload": {
+        "psr-4": {
+            "Simbiat\\": "src/"
+        }
+    },
+    "support": {
+        "issues": "https://github.com/Simbiat/nl2tag/issues",
+        "source": "https://github.com/Simbiat/nl2tag"
+    }
+}
