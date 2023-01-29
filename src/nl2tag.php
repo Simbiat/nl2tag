@@ -26,6 +26,12 @@ class nl2tag
                                 'samp', 'script', 'section', 'select', 'slot', 'small', 'span', 'strong', 'sub', 'sup', 'svg', 'table', 'template', 'textarea', 'time',
                                 'u', 'ul', 'var', 'video', 'wbr'];
     private array $flowContent;
+    #Tags which are used only as wrappers and would generally have whitespace for readability only
+    public const wrapperOnly = ['audio', 'col', 'colgroup', 'datalist', 'dl', 'fieldset', 'map', 'math', 'menu', 'ol', 'optgroup', 'picture', 'select', 'table', 'tbody', 'tfooter', 'thead', 'tr', 'ul', 'video',];
+    private array $wrapperOnly;
+    #Tags that are always expected to be inside wrappers and can have meaningful whitespace in them
+    public const insideWrappersOnly = ['caption', 'dd', 'dt', 'li', 'option', 'td', 'th'];
+    private array $insideWrappersOnly;
     #Flag to add <br> when we have non-phrasing content while wrapping n paragraph or inside tags, where we do not preserve newlines
     private bool $situationalBR = true;
     #Flag to indicate, that we want to collapse new lines. This will replace multiple <br> and remove empty paragraphs and list items
@@ -37,6 +43,8 @@ class nl2tag
         $this->preserveSpacesIn = self::preserveSpacesIn;
         $this->phrasingContent = self::phrasingContent;
         $this->flowContent = self::flowContent;
+        $this->wrapperOnly = self::wrapperOnly;
+        $this->insideWrappersOnly = self::insideWrappersOnly;
     }
     
     public function nl2br(string $string): string
@@ -49,24 +57,29 @@ class nl2tag
         return $this->magic($string);
     }
     
-    public function nl2li(string $string): string
+    public function nl2li(string $string, string $listType = 'ul'): string
     {
-        return $this->magic($string, 'li');
+        return $this->magic($string, 'li', $listType);
     }
     
     #Just a convenient wrapper to generate a changelog list
     public function changelog(string $string): string
     {
-        return $this->magic($string, 'li', true);
+        return $this->magic($string, 'li', changelog: true);
     }
     
     #Function doing the main processing
-    private function magic(string $string, string $wrapper = 'p', bool $changelog = false): string
+    private function magic(string $string, string $wrapper = 'p', string $listType = 'ul', bool $changelog = false): string
     {
         #Force lower case for wrapper type
         $wrapper = strtolower($wrapper);
         if (!in_array($wrapper, ['p', 'li', 'br'])) {
             throw new \UnexpectedValueException('Unsupported wrapper tag type `'.$wrapper.'` provided.');
+        }
+        #Force lower case for list type
+        $listType = strtolower($listType);
+        if (!in_array($listType, ['menu', 'ol', 'ul'])) {
+            throw new \UnexpectedValueException('Unsupported list type `'.$listType.'` provided.');
         }
         #Trim new lines
         $string = $this->trimNewLines($string);
@@ -97,15 +110,15 @@ class nl2tag
                     return $string;
                 } else {
                     #Check if it's already a list
-                    if ($this->isWrapped($string, 'ul') || $this->isWrapped($string, 'ol')) {
+                    if ($this->isWrapped($string, 'ul') || $this->isWrapped($string, 'ol') || $this->isWrapped($string, 'menu')) {
                         #Return as is
                         return $string;
                     } else {
-                        #Return wrapped in <ul> and <li>
+                        #Return wrapped in list type and <li>
                         if ($changelog) {
-                            return '<ul class="changelog_list"><li class="changelog_change">'.$string.'</li></ul>';
+                            return '<'.$listType.' class="changelog_list"><li class="changelog_change">'.$string.'</li></'.$listType.'>';
                         } else {
-                            return '<ul><li>'.$string.'</li></ul>';
+                            return '<'.$listType.'><li>'.$string.'</li></'.$listType.'>';
                         }
                     }
                 }
@@ -261,7 +274,7 @@ class nl2tag
                     if ($this->hasToPreserve($unclosedPrevious)) {
                         $betweenTagsString .= $part;
                     } else {
-                        if ($this->situationalBR) {
+                        if ($this->situationalBR && (!$this->hasOpenWrappers($unclosedPrevious) || $this->hasOpenInsideWrappers($unclosedPrevious))) {
                             $betweenTagsString .= '<br>';
                         }
                     }
@@ -402,12 +415,30 @@ class nl2tag
     #Function to check if list of unclosed tags has those, that require preservation of new lines
     private function hasToPreserve(array $openTags): bool
     {
+        return $this->hasOpenTags($openTags, $this->preserveSpacesIn);
+    }
+    
+    #Function to check if we have open wrapper tags
+    private function hasOpenWrappers(array $openTags): bool
+    {
+        return $this->hasOpenTags($openTags, $this->wrapperOnly);
+    }
+    
+    #Function to check if we have open wrapper tags
+    private function hasOpenInsideWrappers(array $openTags): bool
+    {
+        return $this->hasOpenTags($openTags, $this->insideWrappersOnly);
+    }
+    
+    #Generalized function to check if currently open tags has any tag from a list
+    private function hasOpenTags(array $openTags, array $list): bool
+    {
         #Get keys, which are the real tags
         $openTags = array_keys($openTags);
         #Iterrate through them
         foreach ($openTags as $tag) {
             #Check if it's in the list of tags, where we preserve the new lines
-            if (in_array(strtolower($tag), $this->preserveSpacesIn)) {
+            if (in_array(strtolower($tag), $this->insideWrappersOnly)) {
                 #Just 1 match is enough
                 return true;
             }
@@ -517,6 +548,29 @@ class nl2tag
     public function setPreserveSpacesIn(array $preserveSpacesIn): self
     {
         $this->preserveSpacesIn = $preserveSpacesIn;
+        return $this;
+    }
+    
+    public function getWrapperOnly(): array
+    {
+        return $this->wrapperOnly;
+    }
+    
+    public function setWrapperOnly(array $wrapperOnly): self
+    {
+        $this->wrapperOnly = $wrapperOnly;
+        return $this;
+    }
+    
+    #insideWrappersOnly
+    public function getInsideWrappersOnly(): array
+    {
+        return $this->insideWrappersOnly;
+    }
+    
+    public function setInsideWrappersOnly(array $insideWrappersOnly): self
+    {
+        $this->insideWrappersOnly = $insideWrappersOnly;
         return $this;
     }
     
