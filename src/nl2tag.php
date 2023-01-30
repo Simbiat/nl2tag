@@ -438,7 +438,7 @@ class nl2tag
         #Iterrate through them
         foreach ($openTags as $tag) {
             #Check if it's in the list of tags, where we preserve the new lines
-            if (in_array(strtolower($tag), $this->insideWrappersOnly)) {
+            if (in_array(strtolower($tag), $list)) {
                 #Just 1 match is enough
                 return true;
             }
