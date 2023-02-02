@@ -36,6 +36,8 @@ class nl2tag
     private bool $situationalBR = true;
     #Flag to indicate, that we want to collapse new lines. This will replace multiple <br> and remove empty paragraphs and list items
     private bool $collapseNewLines = true;
+    #Flag to preserve empty paragraphs with non-breaking space. Can be useful, when you use something like `<p>&nbsp;</p> for visual separation of text.
+    private bool $preserveNonBreakingSpace = false;
     
     public function __construct()
     {
@@ -167,7 +169,7 @@ class nl2tag
             #Check if we have any unmatched tags on either current or previous line
             if (empty($unclosedCurrent['opening']) && empty($unclosedCurrent['closing']) && empty($unclosedPrevious)) {
                 #Check if the line is a set of newlines or other whitespace
-                if (preg_match('/^('.self::newLinesRegex.'|\s)*$/ui', $part) === 1) {
+                if (preg_match('/^('.self::newLinesRegex.'|\s|\p{C})*$/ui', $part) === 1) {
                     #If we are here, it means, that we are outside any tags or text nodes, which are probably already wrapped (or do not need wrapping).
                     #Essentially it means that this is just the captured delimiter from the split
                     continue;
@@ -269,7 +271,7 @@ class nl2tag
                 $hasNotAllowed = false;
             } else {
                 #Check if the line is a set of newlines or other whitespace
-                if (preg_match('/^('.self::newLinesRegex.'|\s)*$/ui', $part) === 1) {
+                if (preg_match('/^('.self::newLinesRegex.'|\s|\p{C})*$/ui', $part) === 1) {
                     #Add <br> to the line, if we do not have tags, that need new lines preservation and user agreed to add extra <br> tags
                     if ($this->hasToPreserve($unclosedPrevious)) {
                         $betweenTagsString .= $part;
@@ -310,7 +312,7 @@ class nl2tag
         #Strip all tags
         $string = strip_tags($string);
         #Get first non-whitespace character
-        $character = preg_replace('/^(\s*)(\S)(.*)$/ui', '$2', $string);
+        $character = preg_replace('/^([\s\p{C}]*)(\S)(.*)$/ui', '$2', $string);
         return match($character) {
             '*', '-', '+' => $character,
             default => 'ul',
@@ -388,7 +390,12 @@ class nl2tag
         #Remove <br>s between paragraphs
         $string = preg_replace('/(<p\s*([^<>]+)?>)((\s*<\/?br\s*\/?\s*>\s*)+)(<\/p\s*>)/ui', '$1$3', $string);
         #Remove empty paragraphs
-        return preg_replace('/\s*<p\s*([^<>]+)?>\s*<\/p\s*>\s*/ui', '', $string);
+        if ($this->preserveNonBreakingSpace) {
+            #Since \p{Z} and \h, which are part of \s, include non-breaking space, we have to expand them
+            return preg_replace('/\s*<p\s*([^<>]+)?>[\v\p{C}\x{0020}\x{1680}\x{180E}\x{2000}\x{2001}\x{2002}\x{2003}\x{2004}\x{2005}\x{2006}\x{2007}\x{2008}\x{2009}\x{200A}\x{200B}\x{2028}\x{2029}\x{202F}\x{205F}\x{3000}\x{FEFF}]*<\/p\s*>\s*/ui', '', $string);
+        } else {
+            return preg_replace('/\s*<p\s*([^<>]+)?>[\s\p{C}]*<\/p\s*>\s*/ui', '', $string);
+        }
     }
     
     #Function to check if string has any new lines
@@ -562,7 +569,6 @@ class nl2tag
         return $this;
     }
     
-    #insideWrappersOnly
     public function getInsideWrappersOnly(): array
     {
         return $this->insideWrappersOnly;
@@ -593,6 +599,17 @@ class nl2tag
     public function setCollapseNewLines(bool $collapseNewLines): self
     {
         $this->collapseNewLines = $collapseNewLines;
+        return $this;
+    }
+    
+    public function getPreserveNonBreakingSpace(): bool
+    {
+        return $this->preserveNonBreakingSpace;
+    }
+    
+    public function setPreserveNonBreakingSpace(bool $preserveNonBreakingSpace): self
+    {
+        $this->preserveNonBreakingSpace = $preserveNonBreakingSpace;
         return $this;
     }
 }
