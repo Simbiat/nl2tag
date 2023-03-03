@@ -85,6 +85,8 @@ class nl2tag
         }
         #Trim new lines
         $string = $this->trimNewLines($string);
+        #Clean up whitespace between tags inside wrappers (if any) to prevent extra newlines
+        $string = preg_replace('/(<((\/('.implode('|', $this->insideWrappersOnly).'))|('.implode('|', $this->wrapperOnly).'))[^>]*>)(('.self::newLinesRegex.'|\s|\p{C})*<)/mui', '$1<', $string);
         #Check if there are any new lines
         if (!$this->hasNewLines($string)) {
             if ($wrapper === 'br') {
@@ -300,10 +302,10 @@ class nl2tag
             $newString = $this->collapseNewLines($newString);
         }
         if ($wrapper === 'li') {
-            return $newString.'</ul>';
-        } else {
-            return $newString;
+            $newString .='</ul>';
         }
+        #Clean up whitespace between tags inside wrappers (if any) and return
+        return $newString;
     }
     
     #Function to determine the changelog entry type for string
