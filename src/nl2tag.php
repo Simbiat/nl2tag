@@ -5,7 +5,7 @@ namespace Simbiat;
 class nl2tag
 {
     #List of new lines for respective regex. \R is the main thing, but since we are dealing with HTML, we can also have HTML entities, that we also need to deal with
-    public const newLinesRegex = '(&#10;|&#11;|&#12;|&#13;|&#133;|&#8232;|&#8233;|\R)';
+    public const newLinesRegex = '&#10;|&#11;|&#12;|&#13;|&#133;|&#8232;|&#8233;|\R';
     #List of self-closing tags
     public const voidElements = ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'];
     #Common tags, in which you may want to preserve the new lines
@@ -134,7 +134,7 @@ class nl2tag
             return $string;
         }
         #Split the string by new lines
-        $splitString = preg_split('/('.self::newLinesRegex.')/ui', $string, -1, PREG_SPLIT_DELIM_CAPTURE);
+        $splitString = preg_split('/('.self::newLinesRegex.')+/ui', $string, -1, PREG_SPLIT_DELIM_CAPTURE);
         #Prepare some variables
         if ($wrapper === 'li') {
             if ($changelog) {
@@ -207,10 +207,6 @@ class nl2tag
                                         $openChangelogSubList = true;
                                     }
                                 } else {
-                                    #if (preg_match('/.*Added support for HTTP\/2.*/ui', $part) === 1) {
-                                    #    var_dump($changelogType);
-                                    #    echo htmlentities($this->wrapChangelog($part, $changelogType));exit;
-                                    #}
                                     $newString .= $this->wrapChangelog($part, $changelogType);
                                 }
                             } else {
@@ -227,7 +223,7 @@ class nl2tag
             $this->closeUnclosed($unclosedPrevious, $unclosedCurrent);
             #Add any current unmatched opening tags to list of previously unmatched ones
             $this->updateUnclosed($unclosedPrevious, $unclosedCurrent);
-            #Check if we still have some unclosed tags from
+            #Check if we still have some unclosed tags
             if (empty($unclosedPrevious)) {
                 #Add all previously saved parts and the current part to the new string
                 if ($wrapper === 'br') {
@@ -375,7 +371,7 @@ class nl2tag
     #Function to trim new lines from beginning and end of string
     private function trimNewLines(string $string): string
     {
-        return preg_replace('/'.self::newLinesRegex.'+$/ui', '', preg_replace('/^'.self::newLinesRegex.'+/ui', '', $string));
+        return preg_replace('/('.self::newLinesRegex.')+$/ui', '', preg_replace('/^('.self::newLinesRegex.')+/ui', '', $string));
     }
     
     #Function to trim <br> from beginning and end of string
