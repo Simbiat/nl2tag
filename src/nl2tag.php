@@ -300,8 +300,12 @@ class nl2tag
         if ($wrapper === 'li') {
             $newString .='</ul>';
         }
-        #Clean up whitespace between tags inside wrappers (if any) and return
-        return $newString;
+        #Clean up potential extra <br> tags between <p> or <li> elements
+        $newString = preg_replace('/(<\/(?>p|li)>)(?>(?>'.self::newLinesRegex.'|\s|\p{C})*<\/?br\s*\/?\s*>)*((?>'.self::newLinesRegex.'|\s|\p{C})*<(?>p|li)(?>\s+|>))/ui', '$1$2', $newString);
+        #Do the same for <li> followed by </ul>, </ol> or </menu>
+        $newString = preg_replace('/(<\/li>)(?>(?>'.self::newLinesRegex.'|\s|\p{C})*<\/?br\s*\/?\s*>)*((?>'.self::newLinesRegex.'|\s|\p{C})*<\/(?>ul|ol|menu)\s*>)/ui', '$1$2', $newString);
+        #Same for <ul>, <ol> or <menu> followed by <li>
+        return preg_replace('/(<(?>ul|ol|menu)>)(?>(?>'.self::newLinesRegex.'|\s|\p{C})*<\/?br\s*\/?\s*>)*((?>'.self::newLinesRegex.'|\s|\p{C})*<li(?>\s+|>))/ui', '$1$2', $newString);
     }
     
     #Function to determine the changelog entry type for string
