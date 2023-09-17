@@ -302,10 +302,60 @@ class nl2tag
         }
         #Clean up potential extra <br> tags between <p> or <li> elements
         $newString = preg_replace('/(<\/(?>p|li)>)(?>(?>'.self::newLinesRegex.'|\s|\p{C})*<\/?br\s*\/?\s*>)*((?>'.self::newLinesRegex.'|\s|\p{C})*<(?>p|li)(?>\s+|>))/ui', '$1$2', $newString);
-        #Do the same for <li> followed by </ul>, </ol> or </menu>
+        #Do the same for </li> followed by </ul>, </ol> or </menu>
         $newString = preg_replace('/(<\/li>)(?>(?>'.self::newLinesRegex.'|\s|\p{C})*<\/?br\s*\/?\s*>)*((?>'.self::newLinesRegex.'|\s|\p{C})*<\/(?>ul|ol|menu)\s*>)/ui', '$1$2', $newString);
         #Same for <ul>, <ol> or <menu> followed by <li>
-        return preg_replace('/(<(?>ul|ol|menu)>)(?>(?>'.self::newLinesRegex.'|\s|\p{C})*<\/?br\s*\/?\s*>)*((?>'.self::newLinesRegex.'|\s|\p{C})*<li(?>\s+|>))/ui', '$1$2', $newString);
+        $newString = preg_replace('/(<(?>(?>ul|ol|menu)[^>]*)>)(?>(?>'.self::newLinesRegex.'|\s|\p{C})*<\/?br\s*\/?\s*>)*((?>'.self::newLinesRegex.'|\s|\p{C})*<li(?>\s+|>))/ui', '$1$2', $newString);
+        #Same between <details> and <summary>
+        $newString = preg_replace('/(<(?>details[^>]*)>)(?>(?>'.self::newLinesRegex.'|\s|\p{C})*<\/?br\s*\/?\s*>)*((?>'.self::newLinesRegex.'|\s|\p{C})*<summary(?>\s+|>))/ui', '$1$2', $newString);
+        #Same inside <summary> (essentially we are trimming it)
+        $newString = preg_replace('/(<(?>summary[^>]*)>)(?>(?>'.self::newLinesRegex.'|\s|\p{C})*<\/?br\s*\/?\s*>)*/ui', '$1', $newString);
+        #Also "trim" actual contents of <details>, that is text after </summary> and before </details>
+        $newString = preg_replace('/(<\/summary>)(?>(?>'.self::newLinesRegex.'|\s|\p{C})*<\/?br\s*\/?\s*>)*/ui', '$1', $newString);
+        #Similarly trim <blockquote> content
+        $newString = preg_replace('/(<(?>blockquote[^>]*)>)(?>(?>'.self::newLinesRegex.'|\s|\p{C})*<\/?br\s*\/?\s*>)*/ui', '$1', $newString);
+        #With this we trim before the closing tags of the above-mentioned elements
+        $newString = preg_replace('/(?>(?>'.self::newLinesRegex.'|\s|\p{C})*<\/?br\s*\/?\s*>)*(<\/(?>blockquote|details|summary))/ui', '$1', $newString);
+        #Elements that are supposed to have preserve spaces, should not have <br> elements in them, so we remove them as well
+        return $this->removeBRs($newString);
+    }
+    
+    #Elements that are supposed to have preserve spaces, should not have <br> elements in them, so we remove them as well
+    private function removeBRs(string $string): string
+    {
+        $wrappedInHTML = false;
+        if (preg_match('/^\s*<html( [^<>]*)?>.*<\/html>\s*$/uis', $string) === 1) {
+            $wrappedInHTML = true;
+        } else {
+            $string = '<html>'.$string.'</html>';
+        }
+        /** @noinspection DuplicatedCode */
+        $html = new \DOMDocument(encoding: 'UTF-8');
+        #mb_convert_encoding is done as per workaround for UTF-8 loss/corruption on load from https://stackoverflow.com/questions/8218230/php-domdocument-loadhtml-not-encoding-utf-8-correctly
+        #LIBXML_HTML_NOIMPLIED and LIBXML_HTML_NOTED to avoid adding wrappers (html, body, DTD). This will also allow fewer issues in case string has both regular HTML and some regular text (outside any tags). LIBXML_NOBLANKS to remove empty tags if any. LIBXML_PARSEHUGE to allow processing of larger strings. LIBXML_COMPACT for some potential optimization. LIBXML_NOWARNING and LIBXML_NOERROR to suppress warning in case of malformed HTML. LIBXML_NONET to protect from unsolicited connections to external sources.
+        $html->loadHTML(mb_convert_encoding($string, 'HTML-ENTITIES', 'UTF-8'), LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NOBLANKS | LIBXML_PARSEHUGE | LIBXML_COMPACT | LIBXML_NOWARNING | LIBXML_NOERROR | LIBXML_NONET);
+        $html->preserveWhiteSpace = false;
+        $html->formatOutput = false;
+        $html->normalizeDocument();
+        #Get elements
+        $xpath = new \DOMXPath($html);
+        $elements = $xpath->query('//'.implode(' | //', $this->preserveSpacesIn));
+        #Replace <br> tags with new line
+        foreach ($elements as $element) {
+            $brElements = $element->getElementsByTagName('br');
+            while ($brElements->length > 0) {
+                $newlineTextNode = $html->createTextNode("\n");
+                $brElement = $brElements->item(0);
+                $brElement->parentNode->replaceChild($newlineTextNode, $brElement);
+            }
+        }
+        #Get the cleaned HTML
+        $cleanedHtml = $html->saveHTML();
+        #Strip the excessive HTML tags, if we added them
+        if ($wrappedInHTML === false) {
+            $cleanedHtml = preg_replace('/(^\s*<html( [^<>]*)?>)(.*)(<\/html>\s*$)/uis', '$3', $cleanedHtml);
+        }
+        return preg_replace('/(^\s*<html( [^<>]*)?>)(.*)(<\/html>\s*$)/uis', '$3', $cleanedHtml);
     }
     
     #Function to determine the changelog entry type for string
