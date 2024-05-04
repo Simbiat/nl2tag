@@ -1,77 +1,159 @@
 <?php
-declare(strict_types=1);
+declare(strict_types = 1);
+
 namespace Simbiat;
 
+use JetBrains\PhpStorm\ExpectedValues;
+use JetBrains\PhpStorm\Pure;
+use function in_array;
+
+/**
+ * Class to convert new lines to various HTML tags: `br`, `p` and `li`.
+ */
 class nl2tag
 {
-    #List of new lines for respective regex. \R is the main thing, but since we are dealing with HTML, we can also have HTML entities, that we also need to deal with
+    /**
+     * List of new lines for respective regex. \R is the main thing, but since we are dealing with HTML, we can also have HTML entities, that we also need to deal with
+     * @var string
+     */
     public const string newLinesRegex = '&#10;|&#11;|&#12;|&#13;|&#133;|&#8232;|&#8233;|\R';
-    #List of self-closing tags
+    /**
+     * List of self-closing tags
+     * @var array|string[]
+     */
     public const array voidElements = ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'];
-    #Common tags, in which you may want to preserve the new lines
+    /**
+     * Common tags, in which you may want to preserve the new lines
+     * @var array|string[]
+     */
     public const array preserveSpacesIn = ['pre', 'textarea', 'code', 'samp', 'kbd', 'var'];
-    private array $preserveSpacesIn;
-    #Tags that are allowed in `p`, except for `area`, `link` and `meta`, that may be included under certain conditions.
-    #Add them manually along with any other custom tags, if you know that they can be in the piece of text you are parsing.
+    /**
+     * Modifiable list of tags, inside which we preserve spaces
+     * @var array|string[]
+     */
+    public array $preserveSpacesIn;
+    /**
+     * Tags that are allowed in `p`, except for `area`, `link` and `meta`, that may be included under certain conditions.
+     * Add them manually (`setPhrasingContent`) along with any other custom tags, if you know that they can be in the piece of text you are parsing.
+     *
+     * @var array|string[]
+     */
     public const array phrasingContent = ['a', 'abbr', 'audio', 'b', 'bdi', 'bdo', 'br', 'button', 'canvas', 'cite', 'code', 'data', 'datalist',
-                                    'del', 'dfn', 'em', 'embed', 'i', 'iframe', 'img', 'input', 'ins', 'kbd', 'label', 'map', 'mark', 'math', 'meter',
-                                    'noscript', 'object', 'output', 'picture', 'progress', 'q', 'ruby', 's', 'samp', 'script', 'select', 'slot', 'small',
-                                    'span', 'strong', 'sub', 'sup', 'svg', 'template', 'textarea', 'time', 'u', 'var', 'video', 'wbr'];
-    private array $phrasingContent;
+        'del', 'dfn', 'em', 'embed', 'i', 'iframe', 'img', 'input', 'ins', 'kbd', 'label', 'map', 'mark', 'math', 'meter',
+        'noscript', 'object', 'output', 'picture', 'progress', 'q', 'ruby', 's', 'samp', 'script', 'select', 'slot', 'small',
+        'span', 'strong', 'sub', 'sup', 'svg', 'template', 'textarea', 'time', 'u', 'var', 'video', 'wbr'];
+    /**
+     * Modifiable list of tags, that area allowed in `p`
+     * @var array|string[]
+     */
+    public array $phrasingContent;
+    /**
+     * Tags that are allowed in `li`, except for `area`, `link`, `main` and `meta`, that may be included under certain conditions.
+     * @var array|string[]
+     */
     #Tags that are allowed in `li`, except for `area`, `link`, `main` and `meta`, that may be included under certain conditions.
     public const array flowContent = ['a', 'abbr', 'address', 'article', 'aside', 'audio', 'b', 'bdi', 'bdo', 'blockquote', 'br', 'button', 'canvas', 'cite', 'code',
-                                'data', 'datalist', 'del', 'details', 'dfn', 'dialog', 'div', 'dl', 'em', 'embed', 'fieldset', 'figure', 'footer', 'form',
-                                'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hgroup', 'hr', 'i', 'iframe', 'img', 'input', 'ins', 'kbd', 'label', 'main', 'map',
-                                'mark', 'math', 'menu', 'meter', 'nav', 'noscript', 'object', 'ol', 'output', 'p', 'picture', 'pre', 'progress', 'q', 'ruby', 's',
-                                'samp', 'script', 'section', 'select', 'slot', 'small', 'span', 'strong', 'sub', 'sup', 'svg', 'table', 'template', 'textarea', 'time',
-                                'u', 'ul', 'var', 'video', 'wbr'];
-    private array $flowContent;
-    #Tags which are used only as wrappers and would generally have whitespace for readability only
+        'data', 'datalist', 'del', 'details', 'dfn', 'dialog', 'div', 'dl', 'em', 'embed', 'fieldset', 'figure', 'footer', 'form',
+        'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hgroup', 'hr', 'i', 'iframe', 'img', 'input', 'ins', 'kbd', 'label', 'main', 'map',
+        'mark', 'math', 'menu', 'meter', 'nav', 'noscript', 'object', 'ol', 'output', 'p', 'picture', 'pre', 'progress', 'q', 'ruby', 's',
+        'samp', 'script', 'section', 'select', 'slot', 'small', 'span', 'strong', 'sub', 'sup', 'svg', 'table', 'template', 'textarea', 'time',
+        'u', 'ul', 'var', 'video', 'wbr'];
+    /**
+     * Modifiable list of tags, that are allowed in `li`
+     * @var array|string[]
+     */
+    public array $flowContent;
+    /**
+     * Tags, which are used only as wrappers and would generally have whitespace for readability only
+     * @var array|string[]
+     */
     public const array wrapperOnly = ['audio', 'col', 'colgroup', 'datalist', 'dl', 'fieldset', 'map', 'math', 'menu', 'ol', 'optgroup', 'picture', 'select', 'table', 'tbody', 'tfooter', 'thead', 'tr', 'ul', 'video',];
-    private array $wrapperOnly;
-    #Tags that are always expected to be inside wrappers and can have meaningful whitespace in them
+    /**
+     * Modifiable list of tags, which are used only as wrappers and would generally have whitespace for readability only
+     * @var array|string[]
+     */
+    public array $wrapperOnly;
+    /**
+     * Tags, that are always expected to be inside wrappers and can have meaningful whitespace in them
+     * @var array|string[]
+     */
     public const array insideWrappersOnly = ['caption', 'dd', 'dt', 'li', 'option', 'td', 'th'];
-    private array $insideWrappersOnly;
-    #Flag to add <br> when we have non-phrasing content while wrapping n paragraph or inside tags, where we do not preserve newlines
-    private bool $situationalBR = true;
-    #Flag to indicate, that we want to collapse new lines. This will replace multiple <br> and remove empty paragraphs and list items
-    private bool $collapseNewLines = true;
-    #Flag to preserve empty paragraphs with non-breaking space. Can be useful, when you use something like `<p>&nbsp;</p> for visual separation of text.
-    private bool $preserveNonBreakingSpace = false;
+    /**
+     * Modifiable list of tags, that are always expected to be inside wrappers and can have meaningful whitespace in them
+     * @var array|string[]
+     */
+    public array $insideWrappersOnly;
+    /**
+     * Flag to add <br> when we have non-phrasing content while wrapping n paragraph or inside tags, where we do not preserve newlines
+     * @var bool
+     */
+    public bool $situationalBR = true;
+    /**
+     * Flag to indicate, that we want to collapse new lines. This will replace multiple <br> and remove empty paragraphs and list items
+     * @var bool
+     */
+    public bool $collapseNewLines = true;
+    /**
+     * Flag to preserve empty paragraphs with non-breaking space. Can be useful, when you use something like `<p>&nbsp;</p> for visual separation of text.
+     * @var bool
+     */
+    public bool $preserveNonBreakingSpace = false;
     
-    public function __construct()
-    {
-        #Populate default values of the array based on public constants
-        $this->preserveSpacesIn = self::preserveSpacesIn;
-        $this->phrasingContent = self::phrasingContent;
-        $this->flowContent = self::flowContent;
-        $this->wrapperOnly = self::wrapperOnly;
-        $this->insideWrappersOnly = self::insideWrappersOnly;
-    }
-    
+    /**
+     * Convert new lines to `br` tags
+     * @param string $string
+     *
+     * @return string
+     */
     public function nl2br(string $string): string
     {
         return $this->magic($string, 'br');
     }
     
+    /**
+     * Convert new lines to `p` tags
+     * @param string $string
+     *
+     * @return string
+     */
     public function nl2p(string $string): string
     {
         return $this->magic($string);
     }
     
-    public function nl2li(string $string, string $listType = 'ul'): string
+    /**
+     * Convert new lines to `li` tags
+     * @param string $string   String to process
+     * @param string $listType List type (`ul`, `ol` or `menu`)
+     *
+     * @return string
+     */
+    public function nl2li(string $string, #[ExpectedValues(['ul', 'ol', 'menu'])] string $listType = 'ul'): string
     {
         return $this->magic($string, 'li', $listType);
     }
     
-    #Just a convenient wrapper to generate a changelog list
+    /**
+     * Same as `nl2li`, but if first character is not one of `*`, `+` or `-` a sublist (that is new `<ul>`) will be started until another line like that or the end of string will be encountered.
+     * @param string $string
+     *
+     * @return string
+     */
     public function changelog(string $string): string
     {
         return $this->magic($string, 'li', changelog: true);
     }
     
-    #Function doing the main processing
-    private function magic(string $string, string $wrapper = 'p', string $listType = 'ul', bool $changelog = false): string
+    /**
+     * Function doing the main processing
+     * @param string $string    String to process
+     * @param string $wrapper   Wrapper to use (`p`, `li` or `br`)
+     * @param string $listType  List type (`ul`, `ol` or `menu`), if `li` is used
+     * @param bool   $changelog Flag to generate changelog, if `li` is used
+     *
+     * @return string
+     */
+    private function magic(string $string, #[ExpectedValues(['p', 'li', 'br'])] string $wrapper = 'p', #[ExpectedValues(['ul', 'ol', 'menu'])] string $listType = 'ul', bool $changelog = false): string
     {
         #Force lower case for wrapper type
         $wrapper = mb_strtolower($wrapper, 'UTF-8');
@@ -86,7 +168,7 @@ class nl2tag
         #Trim new lines
         $string = $this->trimNewLines($string);
         #Clean up whitespace between tags inside wrappers (if any) to prevent extra newlines
-        $string = preg_replace('/(<((\/('.implode('|', $this->insideWrappersOnly).'))|('.implode('|', $this->wrapperOnly).'))[^>]*>)(('.self::newLinesRegex.'|\s|\p{C})*<)/mui', '$1<', $string);
+        $string = preg_replace('/(<((\/('.implode('|', array_merge(self::insideWrappersOnly, $this->insideWrappersOnly)).'))|('.implode('|', array_merge(self::wrapperOnly, $this->wrapperOnly)).'))[^>]*>)(('.self::newLinesRegex.'|\s|\p{C})*<)/mui', '$1<', $string);
         #Check if there are any new lines
         if (!$this->hasNewLines($string)) {
             if ($wrapper === 'br') {
@@ -150,7 +232,7 @@ class nl2tag
         foreach ($splitString as $part) {
             #Check if string has non-flow (for lists) or non-phrasing (for paragraphs) content. This is not required for <br>
             if (in_array($wrapper, ['p', 'li'])) {
-                $hasNotAllowedCurrent = match($wrapper) {
+                $hasNotAllowedCurrent = match ($wrapper) {
                     'p' => $this->hasNonPhrasing($part),
                     'li' => $this->hasNonFlow($part),
                 };
@@ -281,7 +363,7 @@ class nl2tag
             $newString = $this->collapseNewLines($newString);
         }
         if ($wrapper === 'li') {
-            $newString .='</ul>';
+            $newString .= '</ul>';
         }
         #Clean up potential extra <br> tags between <p> or <li> elements
         $newString = preg_replace('/(<\/(?>p|li)>)(?>(?>'.self::newLinesRegex.'|\s|\p{C})*<\/?br\s*\/?\s*>)*((?>'.self::newLinesRegex.'|\s|\p{C})*<(?>p|li)(?>\s+|>))/ui', '$1$2', $newString);
@@ -303,7 +385,12 @@ class nl2tag
         return $this->removeBRs($newString);
     }
     
-    #Elements that are supposed to have preserve spaces, should not have <br> elements in them, so we remove them as well
+    /**
+     * Elements that are supposed to have preserve spaces, should not have <br> elements in them, so we remove them as well
+     * @param string $string
+     *
+     * @return string
+     */
     private function removeBRs(string $string): string
     {
         $wrappedInHTML = false;
@@ -314,7 +401,6 @@ class nl2tag
             /** @noinspection HtmlRequiredLangAttribute */
             $string = '<html>'.$string.'</html>';
         }
-        /** @noinspection DuplicatedCode */
         $html = new \DOMDocument(encoding: 'UTF-8');
         #mb_convert_encoding is done as per workaround for UTF-8 loss/corruption on load from https://stackoverflow.com/questions/8218230/php-domdocument-loadhtml-not-encoding-utf-8-correctly
         #LIBXML_HTML_NOIMPLIED and LIBXML_HTML_NOTED to avoid adding wrappers (html, body, DTD). This will also allow fewer issues in case string has both regular HTML and some regular text (outside any tags). LIBXML_NOBLANKS to remove empty tags if any. LIBXML_PARSEHUGE to allow processing of larger strings. LIBXML_COMPACT for some potential optimization. LIBXML_NOWARNING and LIBXML_NOERROR to suppress warning in case of malformed HTML. LIBXML_NONET to protect from unsolicited connections to external sources.
@@ -324,7 +410,7 @@ class nl2tag
         $html->normalizeDocument();
         #Get elements
         $xpath = new \DOMXPath($html);
-        $elements = $xpath->query('//'.implode(' | //', $this->preserveSpacesIn));
+        $elements = $xpath->query('//'.implode(' | //', array_merge(self::preserveSpacesIn, $this->preserveSpacesIn)));
         #Replace <br> tags with new line
         foreach ($elements as $element) {
             $brElements = $element->getElementsByTagName('br');
@@ -343,20 +429,31 @@ class nl2tag
         return preg_replace('/(^\s*<html( [^<>]*)?>)(.*)(<\/html>\s*$)/uis', '$3', $cleanedHtml);
     }
     
-    #Function to determine the changelog entry type for string
+    /**
+     * Function to determine the changelog entry type for string
+     * @param string $string
+     *
+     * @return string
+     */
     private function getChangelogType(string $string): string
     {
         #Strip all tags
         $string = strip_tags($string);
         #Get first non-whitespace character
         $character = preg_replace('/^([\s\p{C}]*)(\S)(.*)$/ui', '$2', $string);
-        return match($character) {
+        return match ($character) {
             '*', '-', '+' => $character,
             default => 'ul',
         };
     }
     
-    #Function to wrap changelog line in appropriate list item
+    /**
+     * Function to wrap changelog line in appropriate list item
+     * @param string $string        Changelog line
+     * @param string $changelogType Changelog type
+     *
+     * @return string
+     */
     private function wrapChangelog(string $string, string $changelogType): string
     {
         if (!in_array($changelogType, ['*', '+', '-'])) {
@@ -369,37 +466,55 @@ class nl2tag
         };
     }
     
-    #Function to remove character for the changelog type from string
+    /**
+     * Function to remove character for the changelog type from string
+     * @param string $string
+     *
+     * @return string
+     */
     private function removeChangelogType(string $string): string
     {
         return preg_replace('/^((<[^<>]+>)*)(\s*)([*+-])(\s*)(.*)$/u', '$1$6', $string);
     }
     
-    #Function to "close" previously opened tags, while we are iterating
+    /**
+     * Function to "close" previously opened tags, while we are iterating
+     * @param array $unclosedPrevious Previously unclosed tags
+     * @param array $unclosedCurrent  Currently unclosed tags
+     *
+     * @return void
+     */
     private function closeUnclosed(array &$unclosedPrevious, array &$unclosedCurrent): void
     {
         if (!empty($unclosedCurrent['closing']) && !empty($unclosedPrevious)) {
             foreach ($unclosedCurrent['closing'] as $tag => $count) {
-                if (isset($unclosedPrevious[ $tag ])) {
-                    $unclosedPrevious[ $tag ] -= $unclosedCurrent['closing'][ $tag ];
+                if (isset($unclosedPrevious[$tag])) {
+                    $unclosedPrevious[$tag] -= $unclosedCurrent['closing'][$tag];
                     #Remove from list of current unclosed items
-                    unset($unclosedCurrent['closing'][ $tag ]);
+                    unset($unclosedCurrent['closing'][$tag]);
                     #If we no longer have unclosed opening tags from previous lines - remove them from the list, too
-                    if ($unclosedPrevious[ $tag ] <= 0) {
-                        unset($unclosedPrevious[ $tag ]);
+                    if ($unclosedPrevious[$tag] <= 0) {
+                        unset($unclosedPrevious[$tag]);
                     }
                 }
             }
         }
     }
     
-    #Function to update list of unclosed tags
+    /**
+     * Function to update list of unclosed tags
+     *
+     * @param array $unclosedPrevious Previously unclosed tags
+     * @param array $unclosedCurrent  Currently unclosed tags
+     *
+     * @return void
+     */
     private function updateUnclosed(array &$unclosedPrevious, array $unclosedCurrent): void
     {
         if (!empty($unclosedCurrent['opening'])) {
-            foreach ($unclosedCurrent['opening'] as $tag=>$count) {
+            foreach ($unclosedCurrent['opening'] as $tag => $count) {
                 if (isset($unclosedPrevious[$tag])) {
-                    $unclosedPrevious[ $tag ] += $count;
+                    $unclosedPrevious[$tag] += $count;
                 } else {
                     $unclosedPrevious[$tag] = $count;
                 }
@@ -407,19 +522,34 @@ class nl2tag
         }
     }
     
-    #Function to trim new lines from beginning and end of string
+    /**
+     * Function to trim new lines from beginning and end of string
+     * @param string $string
+     *
+     * @return string
+     */
     private function trimNewLines(string $string): string
     {
         return preg_replace('/('.self::newLinesRegex.')+$/ui', '', preg_replace('/^('.self::newLinesRegex.')+/ui', '', $string));
     }
     
-    #Function to trim <br> from beginning and end of string
+    /**
+     * Function to trim `<br>` from beginning and end of string
+     * @param string $string
+     *
+     * @return string
+     */
     private function trimBRs(string $string): string
     {
         return preg_replace('/(<\/?br\s*\/?\s*>)+$/ui', '', preg_replace('/^(<\/?br\s*\/?\s*>)+/ui', '', $string));
     }
     
-    #Function to collapse new lines
+    /**
+     * Function to collapse new lines
+     * @param string $string
+     *
+     * @return string
+     */
     private function collapseNewLines(string $string): string
     {
         #Collapse <br>s
@@ -434,38 +564,70 @@ class nl2tag
         return preg_replace('/\s*<p\s*([^<>]+)?>[\s\p{C}]*<\/p\s*>\s*/ui', '', $string);
     }
     
-    #Function to check if string has any new lines
+    /**
+     * Function to check if string has any new lines
+     * @param string $string
+     *
+     * @return bool
+     */
     private function hasNewLines(string $string): bool
     {
         $result = preg_match('/'.self::newLinesRegex.'/ui', $string);
         return $result === 1;
     }
     
-    #Function to check if string is already wrapped in a tag
+    /**
+     * Function to check if string is already wrapped in a tag
+     * @param string $string String to check
+     * @param string $tag    Tag to check against
+     *
+     * @return bool
+     */
     private function isWrapped(string $string, string $tag = 'p'): bool
     {
         return preg_match('/^<'.$tag.'(\s*|\s+[^<>]+)>.*<\/'.$tag.'\s*>$/ui', $string) === 1;
     }
     
-    #Function to check if list of unclosed tags has those, that require preservation of new lines
-    private function hasToPreserve(array $openTags): bool
+    /**
+     * Function to check if list of unclosed tags has those, that require preservation of new lines
+     * @param array $openTags
+     *
+     * @return bool
+     */
+    #[Pure] private function hasToPreserve(array $openTags): bool
     {
-        return $this->hasOpenTags($openTags, $this->preserveSpacesIn);
+        return $this->hasOpenTags($openTags, array_merge(self::preserveSpacesIn, $this->preserveSpacesIn));
     }
     
-    #Function to check if we have open wrapper tags
-    private function hasOpenWrappers(array $openTags): bool
+    /**
+     * Function to check if we have open wrapper tags
+     * @param array $openTags
+     *
+     * @return bool
+     */
+    #[Pure] private function hasOpenWrappers(array $openTags): bool
     {
-        return $this->hasOpenTags($openTags, $this->wrapperOnly);
+        return $this->hasOpenTags($openTags, array_merge(self::wrapperOnly, $this->wrapperOnly));
     }
     
-    #Function to check if we have open wrapper tags
-    private function hasOpenInsideWrappers(array $openTags): bool
+    /**
+     * Function to check if we have open wrapper tags
+     * @param array $openTags
+     *
+     * @return bool
+     */
+    #[Pure] private function hasOpenInsideWrappers(array $openTags): bool
     {
-        return $this->hasOpenTags($openTags, $this->insideWrappersOnly);
+        return $this->hasOpenTags($openTags, array_merge(self::insideWrappersOnly, $this->insideWrappersOnly));
     }
     
-    #Generalized function to check if currently open tags has any tag from a list
+    /**
+     * Generalized function to check if currently open tags has any tag from a list
+     * @param array $openTags Currently open tags
+     * @param array $list     List of tags to check against
+     *
+     * @return bool
+     */
     private function hasOpenTags(array $openTags, array $list): bool
     {
         #Get keys, which are the real tags
@@ -481,23 +643,38 @@ class nl2tag
         return false;
     }
     
-    #Function to check if string has non-phrasing content tags
+    /**
+     * Function to check if string has non-phrasing content tags
+     * @param string $string
+     *
+     * @return bool
+     */
     private function hasNonPhrasing(string $string): bool
     {
         #Check for tags, which are not phrasing content. Checking only for opening tags, since orphaned closing tags can trigger this,
         #but we do not care for them, since normally they won't break the HTML
-        return preg_match('/<(?!p|\/|'.implode('|', $this->phrasingContent).')[^>]*>/ui', $string) === 1;
+        return preg_match('/<(?!p|\/|'.implode('|', array_merge(self::phrasingContent, $this->phrasingContent)).')[^>]*>/ui', $string) === 1;
     }
     
-    #Function to check if string has non-phrasing content tags
+    /**
+     * Function to check if string has non-phrasing content tags
+     * @param string $string
+     *
+     * @return bool
+     */
     private function hasNonFlow(string $string): bool
     {
         #Check for tags, which are not flow content. Checking only for opening tags, since orphaned closing tags can trigger this,
         #but we do not care for them, since normally they won't break the HTML
-        return preg_match('/<(?!p|\/|'.implode('|', $this->flowContent).')[^>]*>/ui', $string) === 1;
+        return preg_match('/<(?!p|\/|'.implode('|', array_merge(self::flowContent, $this->flowContent)).')[^>]*>/ui', $string) === 1;
     }
     
-    #Function to check if string has unclosed tags
+    /**
+     * Function to check if string has unclosed tags
+     * @param string $string
+     *
+     * @return array
+     */
     private function hasUnclosedTags(string $string): array
     {
         #Get all opening tags. This will also match self-closing tags, if they have "/" at the end or do not use it at all
@@ -507,7 +684,7 @@ class nl2tag
         preg_match_all('/<\/([a-zA-Z\-]+)\s*>/ui', $string, $foundTags, PREG_PATTERN_ORDER);
         $closingTags = $foundTags[0];
         #Remove all self-closing tags from opening tags
-        foreach ($openingTags as $key=>$tag) {
+        foreach ($openingTags as $key => $tag) {
             #Get the real tag name
             $tag = mb_strtolower(preg_replace('/<([a-zA-Z\-]+)(\s*\/?| [^<>]+)?>/ui', '$1', $tag), 'UTF-8');
             #Check if self-closing
@@ -519,7 +696,7 @@ class nl2tag
             }
         }
         #Remove all self-closing tags from closing tags
-        foreach ($closingTags as $key=>$tag) {
+        foreach ($closingTags as $key => $tag) {
             #Get the real tag name
             $tag = mb_strtolower(preg_replace('/<\/([a-zA-Z\-]+)\s*>/ui', '$1', $tag), 'UTF-8');
             #Check if self-closing
@@ -536,100 +713,17 @@ class nl2tag
             'closing' => array_count_values($closingTags),
         ];
         #Compare arrays and leave only tags, that are unmatched
-        foreach ($uniqueTags['opening'] as $tag=>$count) {
+        foreach ($uniqueTags['opening'] as $tag => $count) {
             if (isset($uniqueTags['closing'][$tag]) && $uniqueTags['closing'][$tag] === $count) {
                 unset($uniqueTags['opening'][$tag], $uniqueTags['closing'][$tag]);
             }
         }
         #Do the same for the closing tags, too. Not sure if we can get any "hits" on this cycle, but my gut feeling says, that we better check
-        foreach ($uniqueTags['closing'] as $tag=>$count) {
+        foreach ($uniqueTags['closing'] as $tag => $count) {
             if (isset($uniqueTags['opening'][$tag]) && $uniqueTags['opening'][$tag] === $count) {
                 unset($uniqueTags['closing'][$tag], $uniqueTags['opening'][$tag]);
             }
         }
         return $uniqueTags;
-    }
-    
-    
-    #######################
-    # Getters and setters #
-    #######################
-    public function getPhrasingContent(): array
-    {
-        return $this->phrasingContent;
-    }
-
-    public function setPhrasingContent(array $phrasingContent): self
-    {
-        if (!empty($phrasingContent)) {
-            $this->phrasingContent = array_merge($this->phrasingContent, $phrasingContent);
-        }
-        return $this;
-    }
-    
-    public function getPreserveSpacesIn(): array
-    {
-        return $this->preserveSpacesIn;
-    }
-    
-    public function setPreserveSpacesIn(array $preserveSpacesIn): self
-    {
-        $this->preserveSpacesIn = $preserveSpacesIn;
-        return $this;
-    }
-    
-    public function getWrapperOnly(): array
-    {
-        return $this->wrapperOnly;
-    }
-    
-    public function setWrapperOnly(array $wrapperOnly): self
-    {
-        $this->wrapperOnly = $wrapperOnly;
-        return $this;
-    }
-    
-    public function getInsideWrappersOnly(): array
-    {
-        return $this->insideWrappersOnly;
-    }
-    
-    public function setInsideWrappersOnly(array $insideWrappersOnly): self
-    {
-        $this->insideWrappersOnly = $insideWrappersOnly;
-        return $this;
-    }
-    
-    public function getSituationalBR(): bool
-    {
-        return $this->situationalBR;
-    }
-    
-    public function setSituationalBR(bool $situationalBR): self
-    {
-        $this->situationalBR = $situationalBR;
-        return $this;
-    }
-    
-    public function getCollapseNewLines(): bool
-    {
-        return $this->collapseNewLines;
-    }
-    
-    public function setCollapseNewLines(bool $collapseNewLines): self
-    {
-        $this->collapseNewLines = $collapseNewLines;
-        return $this;
-    }
-    
-    public function getPreserveNonBreakingSpace(): bool
-    {
-        return $this->preserveNonBreakingSpace;
-    }
-    
-    public function setPreserveNonBreakingSpace(bool $preserveNonBreakingSpace): self
-    {
-        $this->preserveNonBreakingSpace = $preserveNonBreakingSpace;
-        return $this;
     }
 }
