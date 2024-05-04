@@ -31,7 +31,7 @@ class nl2tag
      * Modifiable list of tags, inside which we preserve spaces
      * @var array|string[]
      */
-    public array $preserveSpacesIn;
+    public array $preserveSpacesIn = [];
     /**
      * Tags that are allowed in `p`, except for `area`, `link` and `meta`, that may be included under certain conditions.
      * Add them manually (`setPhrasingContent`) along with any other custom tags, if you know that they can be in the piece of text you are parsing.
@@ -46,7 +46,7 @@ class nl2tag
      * Modifiable list of tags, that area allowed in `p`
      * @var array|string[]
      */
-    public array $phrasingContent;
+    public array $phrasingContent = [];
     /**
      * Tags that are allowed in `li`, except for `area`, `link`, `main` and `meta`, that may be included under certain conditions.
      * @var array|string[]
@@ -62,7 +62,7 @@ class nl2tag
      * Modifiable list of tags, that are allowed in `li`
      * @var array|string[]
      */
-    public array $flowContent;
+    public array $flowContent = [];
     /**
      * Tags, which are used only as wrappers and would generally have whitespace for readability only
      * @var array|string[]
@@ -72,7 +72,7 @@ class nl2tag
      * Modifiable list of tags, which are used only as wrappers and would generally have whitespace for readability only
      * @var array|string[]
      */
-    public array $wrapperOnly;
+    public array $wrapperOnly = [];
     /**
      * Tags, that are always expected to be inside wrappers and can have meaningful whitespace in them
      * @var array|string[]
@@ -82,7 +82,7 @@ class nl2tag
      * Modifiable list of tags, that are always expected to be inside wrappers and can have meaningful whitespace in them
      * @var array|string[]
      */
-    public array $insideWrappersOnly;
+    public array $insideWrappersOnly = [];
     /**
      * Flag to add <br> when we have non-phrasing content while wrapping n paragraph or inside tags, where we do not preserve newlines
      * @var bool
