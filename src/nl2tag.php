@@ -168,7 +168,7 @@ class nl2tag
         #Trim new lines
         $string = $this->trimNewLines($string);
         #Clean up whitespace between tags inside wrappers (if any) to prevent extra newlines
-        $string = preg_replace('/(<((\/('.implode('|', array_merge(self::insideWrappersOnly, $this->insideWrappersOnly)).'))|('.implode('|', array_merge(self::wrapperOnly, $this->wrapperOnly)).'))[^>]*>)(('.self::newLinesRegex.'|\s|\p{C})*<)/mui', '$1<', $string);
+        $string = preg_replace('/(<((\/('.implode('|', array_unique(array_merge(self::insideWrappersOnly, $this->insideWrappersOnly))).'))|('.implode('|', array_unique(array_merge(self::wrapperOnly, $this->wrapperOnly))).'))[^>]*>)(('.self::newLinesRegex.'|\s|\p{C})*<)/mui', '$1<', $string);
         #Check if there are any new lines
         if (!$this->hasNewLines($string)) {
             if ($wrapper === 'br') {
@@ -410,7 +410,7 @@ class nl2tag
         $html->normalizeDocument();
         #Get elements
         $xpath = new \DOMXPath($html);
-        $elements = $xpath->query('//'.implode(' | //', array_merge(self::preserveSpacesIn, $this->preserveSpacesIn)));
+        $elements = $xpath->query('//'.implode(' | //', array_unique(array_merge(self::preserveSpacesIn, $this->preserveSpacesIn))));
         #Replace <br> tags with new line
         foreach ($elements as $element) {
             $brElements = $element->getElementsByTagName('br');
@@ -596,7 +596,7 @@ class nl2tag
      */
     #[Pure] private function hasToPreserve(array $openTags): bool
     {
-        return $this->hasOpenTags($openTags, array_merge(self::preserveSpacesIn, $this->preserveSpacesIn));
+        return $this->hasOpenTags($openTags, array_unique(array_merge(self::preserveSpacesIn, $this->preserveSpacesIn)));
     }
     
     /**
@@ -607,7 +607,7 @@ class nl2tag
      */
     #[Pure] private function hasOpenWrappers(array $openTags): bool
     {
-        return $this->hasOpenTags($openTags, array_merge(self::wrapperOnly, $this->wrapperOnly));
+        return $this->hasOpenTags($openTags, array_unique(array_merge(self::wrapperOnly, $this->wrapperOnly)));
     }
     
     /**
@@ -618,7 +618,7 @@ class nl2tag
      */
     #[Pure] private function hasOpenInsideWrappers(array $openTags): bool
     {
-        return $this->hasOpenTags($openTags, array_merge(self::insideWrappersOnly, $this->insideWrappersOnly));
+        return $this->hasOpenTags($openTags, array_unique(array_merge(self::insideWrappersOnly, $this->insideWrappersOnly)));
     }
     
     /**
@@ -653,7 +653,7 @@ class nl2tag
     {
         #Check for tags, which are not phrasing content. Checking only for opening tags, since orphaned closing tags can trigger this,
         #but we do not care for them, since normally they won't break the HTML
-        return preg_match('/<(?!p|\/|'.implode('|', array_merge(self::phrasingContent, $this->phrasingContent)).')[^>]*>/ui', $string) === 1;
+        return preg_match('/<(?!p|\/|'.implode('|', array_unique(array_merge(self::phrasingContent, $this->phrasingContent))).')[^>]*>/ui', $string) === 1;
     }
     
     /**
@@ -666,7 +666,7 @@ class nl2tag
     {
         #Check for tags, which are not flow content. Checking only for opening tags, since orphaned closing tags can trigger this,
         #but we do not care for them, since normally they won't break the HTML
-        return preg_match('/<(?!p|\/|'.implode('|', array_merge(self::flowContent, $this->flowContent)).')[^>]*>/ui', $string) === 1;
+        return preg_match('/<(?!p|\/|'.implode('|', array_unique(array_merge(self::flowContent, $this->flowContent))).')[^>]*>/ui', $string) === 1;
     }
     
     /**
