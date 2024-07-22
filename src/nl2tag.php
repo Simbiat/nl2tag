@@ -51,7 +51,6 @@ class nl2tag
      * Tags that are allowed in `li`, except for `area`, `link`, `main` and `meta`, that may be included under certain conditions.
      * @var array|string[]
      */
-    #Tags that are allowed in `li`, except for `area`, `link`, `main` and `meta`, that may be included under certain conditions.
     public const array flowContent = ['a', 'abbr', 'address', 'article', 'aside', 'audio', 'b', 'bdi', 'bdo', 'blockquote', 'br', 'button', 'canvas', 'cite', 'code',
         'data', 'datalist', 'del', 'details', 'dfn', 'dialog', 'div', 'dl', 'em', 'embed', 'fieldset', 'figure', 'footer', 'form',
         'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hgroup', 'hr', 'i', 'iframe', 'img', 'input', 'ins', 'kbd', 'label', 'main', 'map',
