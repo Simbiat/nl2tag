@@ -71,7 +71,7 @@ The class has some options, that can be changed (public variables):
 Create the object:
 
 ```php
-$object = (new \Simbiat\nl2tag);
+$object = (new \Simbiat\HTML\nl2tag);
 ```
 
 Adjust settings, if required. Setters can be chained. Below example will add `custom-element` as phrasing content and set that only `textarea` needs to preserve whitespace.
