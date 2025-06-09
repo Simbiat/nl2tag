@@ -13,32 +13,32 @@ use function in_array;
 class nl2tag
 {
     /**
-     * List of new lines for respective regex. \R is the main thing, but since we are dealing with HTML, we can also have HTML entities, that we also need to deal with
+     * List of new lines for the respective regex. \R is the main thing, but since we are dealing with HTML, we can also have HTML entities, that we also need to deal with
      * @var string
      */
-    public const string newLinesRegex = '&#10;|&#11;|&#12;|&#13;|&#133;|&#8232;|&#8233;|\R';
+    public const string NEW_LINES_REGEX = '&#10;|&#11;|&#12;|&#13;|&#133;|&#8232;|&#8233;|\R';
     /**
      * List of self-closing tags
      * @var array|string[]
      */
-    public const array voidElements = ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'];
+    public const array VOID_ELEMENTS = ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'];
     /**
      * Common tags, in which you may want to preserve the new lines
      * @var array|string[]
      */
-    public const array preserveSpacesIn = ['pre', 'textarea', 'code', 'samp', 'kbd', 'var'];
+    public const array PRESERVE_SPACE_IN = ['pre', 'textarea', 'code', 'samp', 'kbd', 'var'];
     /**
      * Modifiable list of tags, inside which we preserve spaces
      * @var array|string[]
      */
-    public array $preserveSpacesIn = [];
+    public array $preserve_spaces_in = [];
     /**
      * Tags that are allowed in `p`, except for `area`, `link` and `meta`, that may be included under certain conditions.
      * Add them manually (`setPhrasingContent`) along with any other custom tags, if you know that they can be in the piece of text you are parsing.
      *
      * @var array|string[]
      */
-    public const array phrasingContent = ['a', 'abbr', 'audio', 'b', 'bdi', 'bdo', 'br', 'button', 'canvas', 'cite', 'code', 'data', 'datalist',
+    public const array PHRASING_CONTENT = ['a', 'abbr', 'audio', 'b', 'bdi', 'bdo', 'br', 'button', 'canvas', 'cite', 'code', 'data', 'datalist',
         'del', 'dfn', 'em', 'embed', 'i', 'iframe', 'img', 'input', 'ins', 'kbd', 'label', 'map', 'mark', 'math', 'meter',
         'noscript', 'object', 'output', 'picture', 'progress', 'q', 'ruby', 's', 'samp', 'script', 'select', 'slot', 'small',
         'span', 'strong', 'sub', 'sup', 'svg', 'template', 'textarea', 'time', 'u', 'var', 'video', 'wbr'];
@@ -46,42 +46,42 @@ class nl2tag
      * Modifiable list of tags, that area allowed in `p`
      * @var array|string[]
      */
-    public array $phrasingContent = [];
+    public array $phrasing_content = [];
     /**
      * Tags that are allowed in `li`, except for `area`, `link`, `main` and `meta`, that may be included under certain conditions.
      * @var array|string[]
      */
-    public const array flowContent = ['a', 'abbr', 'address', 'article', 'aside', 'audio', 'b', 'bdi', 'bdo', 'blockquote', 'br', 'button', 'canvas', 'cite', 'code',
+    public const array FLOW_CONTENT = ['a', 'abbr', 'address', 'article', 'aside', 'audio', 'b', 'bdi', 'bdo', 'blockquote', 'br', 'button', 'canvas', 'cite', 'code',
         'data', 'datalist', 'del', 'details', 'dfn', 'dialog', 'div', 'dl', 'em', 'embed', 'fieldset', 'figure', 'footer', 'form',
         'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hgroup', 'hr', 'i', 'iframe', 'img', 'input', 'ins', 'kbd', 'label', 'main', 'map',
         'mark', 'math', 'menu', 'meter', 'nav', 'noscript', 'object', 'ol', 'output', 'p', 'picture', 'pre', 'progress', 'q', 'ruby', 's',
         'samp', 'script', 'section', 'select', 'slot', 'small', 'span', 'strong', 'sub', 'sup', 'svg', 'table', 'template', 'textarea', 'time',
         'u', 'ul', 'var', 'video', 'wbr'];
     /**
-     * Modifiable list of tags, that are allowed in `li`
+     * Modifiable list of tags that are allowed in `li`
      * @var array|string[]
      */
-    public array $flowContent = [];
+    public array $flow_content = [];
     /**
      * Tags, which are used only as wrappers and would generally have whitespace for readability only
      * @var array|string[]
      */
-    public const array wrapperOnly = ['audio', 'col', 'colgroup', 'datalist', 'dl', 'fieldset', 'map', 'math', 'menu', 'ol', 'optgroup', 'picture', 'select', 'table', 'tbody', 'tfooter', 'thead', 'tr', 'ul', 'video',];
+    public const array WRAPPER_ONLY = ['audio', 'col', 'colgroup', 'datalist', 'dl', 'fieldset', 'map', 'math', 'menu', 'ol', 'optgroup', 'picture', 'select', 'table', 'tbody', 'tfooter', 'thead', 'tr', 'ul', 'video',];
     /**
      * Modifiable list of tags, which are used only as wrappers and would generally have whitespace for readability only
      * @var array|string[]
      */
-    public array $wrapperOnly = [];
+    public array $wrapper_only = [];
     /**
      * Tags, that are always expected to be inside wrappers and can have meaningful whitespace in them
      * @var array|string[]
      */
-    public const array insideWrappersOnly = ['caption', 'dd', 'dt', 'li', 'option', 'td', 'th'];
+    public const array INSIDE_WRAPPERS_ONLY = ['caption', 'dd', 'dt', 'li', 'option', 'td', 'th'];
     /**
      * Modifiable list of tags, that are always expected to be inside wrappers and can have meaningful whitespace in them
      * @var array|string[]
      */
-    public array $insideWrappersOnly = [];
+    public array $inside_wrappers_only = [];
     /**
      * Flag to add <br> when we have non-phrasing content while wrapping n paragraph or inside tags, where we do not preserve newlines
      * @var bool
@@ -167,7 +167,7 @@ class nl2tag
         #Trim new lines
         $string = $this->trimNewLines($string);
         #Clean up whitespace between tags inside wrappers (if any) to prevent extra newlines
-        $string = preg_replace('/(<((\/('.implode('|', array_unique(array_merge(self::insideWrappersOnly, $this->insideWrappersOnly))).'))|('.implode('|', array_unique(array_merge(self::wrapperOnly, $this->wrapperOnly))).'))[^>]*>)(('.self::newLinesRegex.'|\s|\p{C})*<)/mui', '$1<', $string);
+        $string = preg_replace('/(<((\/('.implode('|', array_unique(array_merge(self::INSIDE_WRAPPERS_ONLY, $this->inside_wrappers_only))).'))|('.implode('|', array_unique(array_merge(self::WRAPPER_ONLY, $this->wrapper_only))).'))[^>]*>)(('.self::NEW_LINES_REGEX.'|\s|\p{C})*<)/mui', '$1<', $string);
         #Check if there are any new lines
         if (!$this->hasNewLines($string)) {
             if ($wrapper === 'br') {
@@ -212,7 +212,7 @@ class nl2tag
             return $string;
         }
         #Split the string by new lines
-        $splitString = preg_split('/('.self::newLinesRegex.')+/ui', $string, -1, PREG_SPLIT_DELIM_CAPTURE);
+        $splitString = preg_split('/('.self::NEW_LINES_REGEX.')+/ui', $string, -1, PREG_SPLIT_DELIM_CAPTURE);
         #Prepare some variables
         if ($wrapper === 'li') {
             if ($changelog) {
@@ -249,7 +249,7 @@ class nl2tag
             #Check if we have any unmatched tags on either current or previous line
             if (empty($unclosedCurrent['opening']) && empty($unclosedCurrent['closing']) && empty($unclosedPrevious)) {
                 #Check if the line is a set of newlines or other whitespace
-                if (preg_match('/^('.self::newLinesRegex.'|\s|\p{C})*$/ui', $part) === 1) {
+                if (preg_match('/^('.self::NEW_LINES_REGEX.'|\s|\p{C})*$/ui', $part) === 1) {
                     #If we are here, it means, that we are outside any tags or text nodes, which are probably already wrapped (or do not need wrapping).
                     #Essentially it means that this is just the captured delimiter from the split
                     continue;
@@ -336,7 +336,7 @@ class nl2tag
                 #Reset flag for non-flow/non-phrasing content
                 $hasNotAllowed = false;
                 #Check if the line is a set of newlines or other whitespace
-            } elseif (preg_match('/^('.self::newLinesRegex.'|\s|\p{C})*$/ui', $part) === 1) {
+            } elseif (preg_match('/^('.self::NEW_LINES_REGEX.'|\s|\p{C})*$/ui', $part) === 1) {
                 #Add <br> to the line, if we do not have tags, that need new lines preservation and user agreed to add extra <br> tags
                 if ($this->hasToPreserve($unclosedPrevious)) {
                     $betweenTagsString .= $part;
@@ -365,21 +365,21 @@ class nl2tag
             $newString .= '</ul>';
         }
         #Clean up potential extra <br> tags between <p> or <li> elements
-        $newString = preg_replace('/(<\/(?>p|li)>)(?>(?>'.self::newLinesRegex.'|\s|\p{C})*<\/?br\s*\/?\s*>)*((?>'.self::newLinesRegex.'|\s|\p{C})*<(?>p|li)(?>\s+|>))/ui', '$1$2', $newString);
+        $newString = preg_replace('/(<\/(?>p|li)>)(?>(?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<\/?br\s*\/?\s*>)*((?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<(?>p|li)(?>\s+|>))/ui', '$1$2', $newString);
         #Do the same for </li> followed by </ul>, </ol> or </menu>
-        $newString = preg_replace('/(<\/li>)(?>(?>'.self::newLinesRegex.'|\s|\p{C})*<\/?br\s*\/?\s*>)*((?>'.self::newLinesRegex.'|\s|\p{C})*<\/(?>ul|ol|menu)\s*>)/ui', '$1$2', $newString);
+        $newString = preg_replace('/(<\/li>)(?>(?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<\/?br\s*\/?\s*>)*((?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<\/(?>ul|ol|menu)\s*>)/ui', '$1$2', $newString);
         #Same for <ul>, <ol> or <menu> followed by <li>
-        $newString = preg_replace('/(<(?>(?>ul|ol|menu)[^>]*)>)(?>(?>'.self::newLinesRegex.'|\s|\p{C})*<\/?br\s*\/?\s*>)*((?>'.self::newLinesRegex.'|\s|\p{C})*<li(?>\s+|>))/ui', '$1$2', $newString);
+        $newString = preg_replace('/(<(?>(?>ul|ol|menu)[^>]*)>)(?>(?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<\/?br\s*\/?\s*>)*((?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<li(?>\s+|>))/ui', '$1$2', $newString);
         #Same between <details> and <summary>
-        $newString = preg_replace('/(<(?>details[^>]*)>)(?>(?>'.self::newLinesRegex.'|\s|\p{C})*<\/?br\s*\/?\s*>)*((?>'.self::newLinesRegex.'|\s|\p{C})*<summary(?>\s+|>))/ui', '$1$2', $newString);
+        $newString = preg_replace('/(<(?>details[^>]*)>)(?>(?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<\/?br\s*\/?\s*>)*((?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<summary(?>\s+|>))/ui', '$1$2', $newString);
         #Same inside <summary> (essentially we are trimming it)
-        $newString = preg_replace('/(<(?>summary[^>]*)>)(?>(?>'.self::newLinesRegex.'|\s|\p{C})*<\/?br\s*\/?\s*>)*/ui', '$1', $newString);
+        $newString = preg_replace('/(<(?>summary[^>]*)>)(?>(?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<\/?br\s*\/?\s*>)*/ui', '$1', $newString);
         #Also "trim" actual contents of <details>, that is text after </summary> and before </details>
-        $newString = preg_replace('/(<\/summary>)(?>(?>'.self::newLinesRegex.'|\s|\p{C})*<\/?br\s*\/?\s*>)*/ui', '$1', $newString);
+        $newString = preg_replace('/(<\/summary>)(?>(?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<\/?br\s*\/?\s*>)*/ui', '$1', $newString);
         #Similarly trim <blockquote> content
-        $newString = preg_replace('/(<(?>blockquote[^>]*)>)(?>(?>'.self::newLinesRegex.'|\s|\p{C})*<\/?br\s*\/?\s*>)*/ui', '$1', $newString);
+        $newString = preg_replace('/(<(?>blockquote[^>]*)>)(?>(?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<\/?br\s*\/?\s*>)*/ui', '$1', $newString);
         #With this we trim before the closing tags of the above-mentioned elements
-        $newString = preg_replace('/(?>(?>'.self::newLinesRegex.'|\s|\p{C})*<\/?br\s*\/?\s*>)*(<\/(?>blockquote|details|summary))/ui', '$1', $newString);
+        $newString = preg_replace('/(?>(?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<\/?br\s*\/?\s*>)*(<\/(?>blockquote|details|summary))/ui', '$1', $newString);
         #Elements that are supposed to have preserve spaces, should not have <br> elements in them, so we remove them as well
         return $this->removeBRs($newString);
     }
@@ -409,7 +409,7 @@ class nl2tag
         $html->normalizeDocument();
         #Get elements
         $xpath = new \DOMXPath($html);
-        $elements = $xpath->query('//'.implode(' | //', array_unique(array_merge(self::preserveSpacesIn, $this->preserveSpacesIn))));
+        $elements = $xpath->query('//'.implode(' | //', array_unique(array_merge(self::PRESERVE_SPACE_IN, $this->preserve_spaces_in))));
         #Replace <br> tags with new line
         foreach ($elements as $element) {
             $brElements = $element->getElementsByTagName('br');
@@ -529,7 +529,7 @@ class nl2tag
      */
     private function trimNewLines(string $string): string
     {
-        return preg_replace('/('.self::newLinesRegex.')+$/ui', '', preg_replace('/^('.self::newLinesRegex.')+/ui', '', $string));
+        return preg_replace('/('.self::NEW_LINES_REGEX.')+$/ui', '', preg_replace('/^('.self::NEW_LINES_REGEX.')+/ui', '', $string));
     }
     
     /**
@@ -571,7 +571,7 @@ class nl2tag
      */
     private function hasNewLines(string $string): bool
     {
-        $result = preg_match('/'.self::newLinesRegex.'/ui', $string);
+        $result = preg_match('/'.self::NEW_LINES_REGEX.'/ui', $string);
         return $result === 1;
     }
     
@@ -595,7 +595,7 @@ class nl2tag
      */
     #[Pure] private function hasToPreserve(array $openTags): bool
     {
-        return $this->hasOpenTags($openTags, array_unique(array_merge(self::preserveSpacesIn, $this->preserveSpacesIn)));
+        return $this->hasOpenTags($openTags, array_unique(array_merge(self::PRESERVE_SPACE_IN, $this->preserve_spaces_in)));
     }
     
     /**
@@ -606,7 +606,7 @@ class nl2tag
      */
     #[Pure] private function hasOpenWrappers(array $openTags): bool
     {
-        return $this->hasOpenTags($openTags, array_unique(array_merge(self::wrapperOnly, $this->wrapperOnly)));
+        return $this->hasOpenTags($openTags, array_unique(array_merge(self::WRAPPER_ONLY, $this->wrapper_only)));
     }
     
     /**
@@ -617,7 +617,7 @@ class nl2tag
      */
     #[Pure] private function hasOpenInsideWrappers(array $openTags): bool
     {
-        return $this->hasOpenTags($openTags, array_unique(array_merge(self::insideWrappersOnly, $this->insideWrappersOnly)));
+        return $this->hasOpenTags($openTags, array_unique(array_merge(self::INSIDE_WRAPPERS_ONLY, $this->inside_wrappers_only)));
     }
     
     /**
@@ -652,7 +652,7 @@ class nl2tag
     {
         #Check for tags, which are not phrasing content. Checking only for opening tags, since orphaned closing tags can trigger this,
         #but we do not care for them, since normally they won't break the HTML
-        return preg_match('/<(?!p|\/|'.implode('|', array_unique(array_merge(self::phrasingContent, $this->phrasingContent))).')[^>]*>/ui', $string) === 1;
+        return preg_match('/<(?!p|\/|'.implode('|', array_unique(array_merge(self::PHRASING_CONTENT, $this->phrasing_content))).')[^>]*>/ui', $string) === 1;
     }
     
     /**
@@ -665,7 +665,7 @@ class nl2tag
     {
         #Check for tags, which are not flow content. Checking only for opening tags, since orphaned closing tags can trigger this,
         #but we do not care for them, since normally they won't break the HTML
-        return preg_match('/<(?!p|\/|'.implode('|', array_unique(array_merge(self::flowContent, $this->flowContent))).')[^>]*>/ui', $string) === 1;
+        return preg_match('/<(?!p|\/|'.implode('|', array_unique(array_merge(self::FLOW_CONTENT, $this->flow_content))).')[^>]*>/ui', $string) === 1;
     }
     
     /**
@@ -687,8 +687,8 @@ class nl2tag
             #Get the real tag name
             $tag = mb_strtolower(preg_replace('/<([a-zA-Z\-]+)(\s*\/?| [^<>]+)?>/ui', '$1', $tag), 'UTF-8');
             #Check if self-closing
-            if (in_array($tag, self::voidElements, true)) {
-                #Remove from array
+            if (in_array($tag, self::VOID_ELEMENTS, true)) {
+                #Remove from the array
                 unset($openingTags[$key]);
             } else {
                 $openingTags[$key] = $tag;
@@ -699,8 +699,8 @@ class nl2tag
             #Get the real tag name
             $tag = mb_strtolower(preg_replace('/<\/([a-zA-Z\-]+)\s*>/ui', '$1', $tag), 'UTF-8');
             #Check if self-closing
-            if (in_array($tag, self::voidElements, true)) {
-                #Remove from array
+            if (in_array($tag, self::VOID_ELEMENTS, true)) {
+                #Remove from the array
                 unset($closingTags[$key]);
             } else {
                 $closingTags[$key] = $tag;

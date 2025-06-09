@@ -47,21 +47,21 @@ This is because recursion would require traversal of the DOM tree, which implies
 
 Class has some public constants, in case you would require something similar in other classes in your code:
 
-1. `newLinesRegex` - list of entities, that are considered "new lines". It's a string with `|` as separator to be used directly in regex.
-2. `voidElements` - array of standard HTML5 tags, that are considered "self-closing", that is do not require a closing tag.
-3. `preserveSpacesIn` - array of standard HTML5 tags, that usually imply preservation of whitespace in them.
-4. `phrasingContent` - array of standard HTML5 tags, that are considered as "phrasing content" and do not have any additional conditions for that.
-5. `flowContent` - similar tp `phrasingContent`, but for "flow content" as per [spec](https://html.spec.whatwg.org/#flow-content).
+1. `NEW_LINES_REGEX` - list of entities that are considered "new lines". It's a string with `|` as separator to be used directly in regex.
+2. `VOID_ELEMENTS` - array of standard HTML5 tags that are considered "self-closing", that is do not require a closing tag.
+3. `PRESERVE_SPACE_IN` - array of standard HTML5 tags that usually imply preservation of whitespace in them.
+4. `PHRASING_CONTENT` - array of standard HTML5 tags that are considered as "phrasing content" and do not have any additional conditions for that.
+5. `FLOW_CONTENT` - similar tp `PHRASING_CONTENT`, but for "flow content" as per [spec](https://html.spec.whatwg.org/#flow-content).
 
 ## Options
 
 The class has some options, that can be changed (public variables):
 
-1. `$preserveSpacesIn` - use to adjust list of tags inside which you want to preserve spaces. Can be an empty array, which will mean, that new lines inside all tags may be replaced accordingly.
-2. `$phrasingContent` - use to adjust the list of tags, that are considered as phrasing content. Tags from respective constant cannot be removed. The most likely scenario for updating this list is when you have custom HTML elements.
-3. `$flowContent` - use to adjust the list of tags, that are considered as flow content. Tags from respective constant cannot be removed. The most likely scenario for updating this list is when you have custom HTML elements.
-4. `$wrapperOnly` - list of tags, that are treated as wrappers only, like `table` and the like. They can have new lines between tags, and unless excluded, you can get excessive `<br>` tags, if `$situationalBR` is turned on.
-5. `$insideWrappersOnly` - list of tags, that only happen within respective wrappers and can have meaningful new lines in them, like `td`, `th`. Used specifically in conjunction with `$wrapperOnly` setting.
+1. `$preserve_spaces_in` - use to adjust list of tags inside which you want to preserve spaces. Can be an empty array, which will mean, that new lines inside all tags may be replaced accordingly.
+2. `$phrasing_content` - use to adjust the list of tags, that are considered as phrasing content. Tags from respective constant cannot be removed. The most likely scenario for updating this list is when you have custom HTML elements.
+3. `$flow_content` - use to adjust the list of tags, that are considered as flow content. Tags from respective constant cannot be removed. The most likely scenario for updating this list is when you have custom HTML elements.
+4. `$wrapper_only` - list of tags, that are treated as wrappers only, like `table` and the like. They can have new lines between tags, and unless excluded, you can get excessive `<br>` tags, if `$situationalBR` is turned on.
+5. `$inside_wrappers_only` - list of tags, that only happen within respective wrappers and can have meaningful new lines in them, like `td`, `th`. Used specifically in conjunction with `$wrapper_only` setting.
 6. `$situationalBR` - boolean flag (default is `true`) indicating, whether class can replace newlines with `<br>` when a new line is found inside the content of the tag, and it's not the one where we preserve whitespace. Sorry if the name is not clear enough, but was not able to come up with something else more proper.
 7. `$collapseNewLines` - boolean flag (default is `true`) indicating, whether class will try to collapse new lines. This means that `<br><br>` will be replaced with `<br>`, `<br>` tags between `<p>` tags will be removed (that is **only** `<p>1</p><br><p>2</p>` will change into `<p>1</p><p>2</p>`) and paragraphs consisting only of whitespace will be removed, too. I believe, that in most cases, you would want this enabled, but there may be situations, when you would like to avoid it, for example, when you can have respective combinations inside `<textarea>`.
 8. `$preserveNonBreakingSpace` - boolean flag, indicating, whether class will preserve empty paragraphs with non-breaking space (`&nbsp`, which gets converted to proper character during processing). If set to `true` (default is `false`), lines like `<p>&nbsp</p>` will not be removed, even if `$collapseNewLines` is also `true`.
