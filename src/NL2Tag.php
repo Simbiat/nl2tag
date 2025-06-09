@@ -10,7 +10,7 @@ use function in_array;
 /**
  * Class to convert new lines to various HTML tags: `br`, `p` and `li`.
  */
-class nl2tag
+class NL2Tag
 {
     /**
      * List of new lines for the respective regex. \R is the main thing, but since we are dealing with HTML, we can also have HTML entities, that we also need to deal with
