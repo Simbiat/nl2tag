@@ -169,7 +169,7 @@ class NL2Tag
         #Trim new lines
         $string = $this->trimNewLines($string);
         #Clean up whitespace between tags inside wrappers (if any) to prevent extra newlines
-        $string = preg_replace('/(<((\/('.implode('|', array_unique(array_merge(self::INSIDE_WRAPPERS_ONLY, $this->inside_wrappers_only))).'))|('.implode('|', array_unique(array_merge(self::WRAPPER_ONLY, $this->wrapper_only))).'))[^>]*>)(('.self::NEW_LINES_REGEX.'|\s|\p{C})*<)/mui', '$1<', $string);
+        $string = \preg_replace('/(<((\/('.\implode('|', \array_unique(\array_merge(self::INSIDE_WRAPPERS_ONLY, $this->inside_wrappers_only))).'))|('.\implode('|', \array_unique(\array_merge(self::WRAPPER_ONLY, $this->wrapper_only))).'))[^>]*>)(('.self::NEW_LINES_REGEX.'|\s|\p{C})*<)/mui', '$1<', $string);
         #Check if there are any new lines
         if (!$this->hasNewLines($string)) {
             if ($wrapper === 'br') {
@@ -214,7 +214,7 @@ class NL2Tag
             return $string;
         }
         #Split the string by new lines
-        $split_string = preg_split('/('.self::NEW_LINES_REGEX.')+/ui', $string, -1, PREG_SPLIT_DELIM_CAPTURE);
+        $split_string = \preg_split('/('.self::NEW_LINES_REGEX.')+/ui', $string, -1, \PREG_SPLIT_DELIM_CAPTURE);
         #Prepare some variables
         if ($wrapper === 'li') {
             if ($changelog) {
@@ -251,7 +251,7 @@ class NL2Tag
             #Check if we have any unmatched tags on either current or previous line
             if (empty($unclosed_current['opening']) && empty($unclosed_current['closing']) && empty($unclosed_previous)) {
                 #Check if the line is a set of newlines or other whitespace
-                if (preg_match('/^('.self::NEW_LINES_REGEX.'|\s|\p{C})*$/ui', $part) === 1) {
+                if (\preg_match('/^('.self::NEW_LINES_REGEX.'|\s|\p{C})*$/ui', $part) === 1) {
                     #If we are here, it means, that we are outside any tags or text nodes, which are probably already wrapped (or do not need wrapping).
                     #Essentially it means that this is just the captured delimiter from the split
                     continue;
@@ -338,7 +338,7 @@ class NL2Tag
                 #Reset flag for non-flow/non-phrasing content
                 $has_not_allowed = false;
                 #Check if the line is a set of newlines or other whitespace
-            } elseif (preg_match('/^('.self::NEW_LINES_REGEX.'|\s|\p{C})*$/ui', $part) === 1) {
+            } elseif (\preg_match('/^('.self::NEW_LINES_REGEX.'|\s|\p{C})*$/ui', $part) === 1) {
                 #Add <br> to the line, if we do not have tags, that need new lines preservation and user agreed to add extra <br> tags
                 if ($this->hasToPreserve($unclosed_previous)) {
                     $between_tags_string .= $part;
@@ -367,21 +367,21 @@ class NL2Tag
             $new_string .= '</ul>';
         }
         #Clean up potential extra <br> tags between <p> or <li> elements
-        $new_string = preg_replace('/(<\/(?>p|li)>)(?>(?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<\/?br\s*\/?\s*>)*((?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<(?>p|li)(?>\s+|>))/ui', '$1$2', $new_string);
+        $new_string = \preg_replace('/(<\/(?>p|li)>)(?>(?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<\/?br\s*\/?\s*>)*((?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<(?>p|li)(?>\s+|>))/ui', '$1$2', $new_string);
         #Do the same for </li> followed by </ul>, </ol> or </menu>
-        $new_string = preg_replace('/(<\/li>)(?>(?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<\/?br\s*\/?\s*>)*((?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<\/(?>ul|ol|menu)\s*>)/ui', '$1$2', $new_string);
+        $new_string = \preg_replace('/(<\/li>)(?>(?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<\/?br\s*\/?\s*>)*((?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<\/(?>ul|ol|menu)\s*>)/ui', '$1$2', $new_string);
         #Same for <ul>, <ol> or <menu> followed by <li>
-        $new_string = preg_replace('/(<(?>(?>ul|ol|menu)[^>]*)>)(?>(?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<\/?br\s*\/?\s*>)*((?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<li(?>\s+|>))/ui', '$1$2', $new_string);
+        $new_string = \preg_replace('/(<(?>(?>ul|ol|menu)[^>]*)>)(?>(?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<\/?br\s*\/?\s*>)*((?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<li(?>\s+|>))/ui', '$1$2', $new_string);
         #Same between <details> and <summary>
-        $new_string = preg_replace('/(<(?>details[^>]*)>)(?>(?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<\/?br\s*\/?\s*>)*((?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<summary(?>\s+|>))/ui', '$1$2', $new_string);
+        $new_string = \preg_replace('/(<(?>details[^>]*)>)(?>(?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<\/?br\s*\/?\s*>)*((?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<summary(?>\s+|>))/ui', '$1$2', $new_string);
         #Same inside <summary> (essentially we are trimming it)
-        $new_string = preg_replace('/(<(?>summary[^>]*)>)(?>(?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<\/?br\s*\/?\s*>)*/ui', '$1', $new_string);
+        $new_string = \preg_replace('/(<(?>summary[^>]*)>)(?>(?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<\/?br\s*\/?\s*>)*/ui', '$1', $new_string);
         #Also "trim" actual contents of <details>, that is text after </summary> and before </details>
-        $new_string = preg_replace('/(<\/summary>)(?>(?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<\/?br\s*\/?\s*>)*/ui', '$1', $new_string);
+        $new_string = \preg_replace('/(<\/summary>)(?>(?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<\/?br\s*\/?\s*>)*/ui', '$1', $new_string);
         #Similarly trim <blockquote> content
-        $new_string = preg_replace('/(<(?>blockquote[^>]*)>)(?>(?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<\/?br\s*\/?\s*>)*/ui', '$1', $new_string);
+        $new_string = \preg_replace('/(<(?>blockquote[^>]*)>)(?>(?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<\/?br\s*\/?\s*>)*/ui', '$1', $new_string);
         #With this we trim before the closing tags of the above-mentioned elements
-        $new_string = preg_replace('/(?>(?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<\/?br\s*\/?\s*>)*(<\/(?>blockquote|details|summary))/ui', '$1', $new_string);
+        $new_string = \preg_replace('/(?>(?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<\/?br\s*\/?\s*>)*(<\/(?>blockquote|details|summary))/ui', '$1', $new_string);
         #Elements that are supposed to have preserve spaces, should not have <br> elements in them, so we remove them as well
         return $this->removeBRs($new_string);
     }
@@ -395,7 +395,7 @@ class NL2Tag
     private function removeBRs(string $string): string
     {
         $wrapped_in_html = false;
-        if (preg_match('/^\s*<html( [^<>]*)?>.*<\/html>\s*$/uis', $string) === 1) {
+        if (\preg_match('/^\s*<html( [^<>]*)?>.*<\/html>\s*$/uis', $string) === 1) {
             $wrapped_in_html = true;
         } else {
             #Suppressing inspection, since we do not need the language for the purpose of the library
@@ -405,13 +405,13 @@ class NL2Tag
         $html = new \DOMDocument(encoding: 'UTF-8');
         #mb_convert_encoding is done as per workaround for UTF-8 loss/corruption on load from https://stackoverflow.com/questions/8218230/php-domdocument-loadhtml-not-encoding-utf-8-correctly
         #LIBXML_HTML_NOIMPLIED and LIBXML_HTML_NOTED to avoid adding wrappers (html, body, DTD). This will also allow fewer issues in case string has both regular HTML and some regular text (outside any tags). LIBXML_NOBLANKS to remove empty tags if any. LIBXML_PARSEHUGE to allow processing of larger strings. LIBXML_COMPACT for some potential optimization. LIBXML_NOWARNING and LIBXML_NOERROR to suppress warning in case of malformed HTML. LIBXML_NONET to protect from unsolicited connections to external sources.
-        $html->loadHTML(mb_convert_encoding($string, 'HTML-ENTITIES', 'UTF-8'), LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NOBLANKS | LIBXML_PARSEHUGE | LIBXML_COMPACT | LIBXML_NOWARNING | LIBXML_NOERROR | LIBXML_NONET);
+        $html->loadHTML(mb_convert_encoding($string, 'HTML-ENTITIES', 'UTF-8'), \LIBXML_HTML_NOIMPLIED | \LIBXML_HTML_NODEFDTD | \LIBXML_NOBLANKS | \LIBXML_PARSEHUGE | \LIBXML_COMPACT | \LIBXML_NOWARNING | \LIBXML_NOERROR | \LIBXML_NONET);
         $html->preserveWhiteSpace = false;
         $html->formatOutput = false;
         $html->normalizeDocument();
         #Get elements
         $xpath = new \DOMXPath($html);
-        $elements = $xpath->query('//'.implode(' | //', array_unique(array_merge(self::PRESERVE_SPACE_IN, $this->preserve_spaces_in))));
+        $elements = $xpath->query('//'.\implode(' | //', \array_unique(\array_merge(self::PRESERVE_SPACE_IN, $this->preserve_spaces_in))));
         #Replace <br> tags with new line
         foreach ($elements as $element) {
             $br_elements = $element->getElementsByTagName('br');
@@ -425,9 +425,9 @@ class NL2Tag
         $cleaned_html = $html->saveHTML();
         #Strip the excessive HTML tags if we added them
         if (!$wrapped_in_html) {
-            $cleaned_html = preg_replace('/(^\s*<html( [^<>]*)?>)(.*)(<\/html>\s*$)/uis', '$3', $cleaned_html);
+            $cleaned_html = \preg_replace('/(^\s*<html( [^<>]*)?>)(.*)(<\/html>\s*$)/uis', '$3', $cleaned_html);
         }
-        return preg_replace('/(^\s*<html( [^<>]*)?>)(.*)(<\/html>\s*$)/uis', '$3', $cleaned_html);
+        return \preg_replace('/(^\s*<html( [^<>]*)?>)(.*)(<\/html>\s*$)/uis', '$3', $cleaned_html);
     }
     
     /**
@@ -439,9 +439,9 @@ class NL2Tag
     private function getChangelogType(string $string): string
     {
         #Strip all tags
-        $string = strip_tags($string);
+        $string = \strip_tags($string);
         #Get first non-whitespace character
-        $character = preg_replace('/^([\s\p{C}]*)(\S)(.*)$/ui', '$2', $string);
+        $character = \preg_replace('/^([\s\p{C}]*)(\S)(.*)$/ui', '$2', $string);
         return match ($character) {
             '*', '-', '+' => $character,
             default => 'ul',
@@ -476,7 +476,7 @@ class NL2Tag
      */
     private function removeChangelogType(string $string): string
     {
-        return preg_replace('/^((<[^<>]+>)*)(\s*)([*+-])(\s*)(.*)$/u', '$1$6', $string);
+        return \preg_replace('/^((<[^<>]+>)*)(\s*)([*+-])(\s*)(.*)$/u', '$1$6', $string);
     }
     
     /**
@@ -533,7 +533,7 @@ class NL2Tag
      */
     private function trimNewLines(string $string): string
     {
-        return preg_replace('/('.self::NEW_LINES_REGEX.')+$/ui', '', preg_replace('/^('.self::NEW_LINES_REGEX.')+/ui', '', $string));
+        return \preg_replace('/('.self::NEW_LINES_REGEX.')+$/ui', '', \preg_replace('/^('.self::NEW_LINES_REGEX.')+/ui', '', $string));
     }
     
     /**
@@ -544,7 +544,7 @@ class NL2Tag
      */
     private function trimBRs(string $string): string
     {
-        return preg_replace('/(<\/?br\s*\/?\s*>)+$/ui', '', preg_replace('/^(<\/?br\s*\/?\s*>)+/ui', '', $string));
+        return \preg_replace('/(<\/?br\s*\/?\s*>)+$/ui', '', \preg_replace('/^(<\/?br\s*\/?\s*>)+/ui', '', $string));
     }
     
     /**
@@ -556,15 +556,15 @@ class NL2Tag
     private function collapseNewLines(string $string): string
     {
         #Collapse <br>s
-        $string = preg_replace('/(\s*<\/?br\s*\/?\s*>\s*)+/ui', '<br>', $string);
+        $string = \preg_replace('/(\s*<\/?br\s*\/?\s*>\s*)+/ui', '<br>', $string);
         #Remove <br>s between paragraphs
-        $string = preg_replace('/(<p\s*([^<>]+)?>)((\s*<\/?br\s*\/?\s*>\s*)+)(<\/p\s*>)/ui', '$1$3', $string);
+        $string = \preg_replace('/(<p\s*([^<>]+)?>)((\s*<\/?br\s*\/?\s*>\s*)+)(<\/p\s*>)/ui', '$1$3', $string);
         #Remove empty paragraphs
         if ($this->preserve_non_breaking_space) {
             #Since \p{Z} and \h, which are part of \s, include non-breaking space, we have to expand them
-            return preg_replace('/\s*<p\s*([^<>]+)?>[\v\p{C}\x{0020}\x{1680}\x{180E}\x{2000}\x{2001}\x{2002}\x{2003}\x{2004}\x{2005}\x{2006}\x{2007}\x{2008}\x{2009}\x{200A}\x{200B}\x{2028}\x{2029}\x{202F}\x{205F}\x{3000}\x{FEFF}]*<\/p\s*>\s*/ui', '', $string);
+            return \preg_replace('/\s*<p\s*([^<>]+)?>[\v\p{C}\x{0020}\x{1680}\x{180E}\x{2000}\x{2001}\x{2002}\x{2003}\x{2004}\x{2005}\x{2006}\x{2007}\x{2008}\x{2009}\x{200A}\x{200B}\x{2028}\x{2029}\x{202F}\x{205F}\x{3000}\x{FEFF}]*<\/p\s*>\s*/ui', '', $string);
         }
-        return preg_replace('/\s*<p\s*([^<>]+)?>[\s\p{C}]*<\/p\s*>\s*/ui', '', $string);
+        return \preg_replace('/\s*<p\s*([^<>]+)?>[\s\p{C}]*<\/p\s*>\s*/ui', '', $string);
     }
     
     /**
@@ -575,7 +575,7 @@ class NL2Tag
      */
     private function hasNewLines(string $string): bool
     {
-        $result = preg_match('/'.self::NEW_LINES_REGEX.'/ui', $string);
+        $result = \preg_match('/'.self::NEW_LINES_REGEX.'/ui', $string);
         return $result === 1;
     }
     
@@ -588,7 +588,7 @@ class NL2Tag
      */
     private function isWrapped(string $string, string $tag = 'p'): bool
     {
-        return preg_match('/^<'.$tag.'(\s*|\s+[^<>]+)>.*<\/'.$tag.'\s*>$/ui', $string) === 1;
+        return \preg_match('/^<'.$tag.'(\s*|\s+[^<>]+)>.*<\/'.$tag.'\s*>$/ui', $string) === 1;
     }
     
     /**
@@ -600,7 +600,7 @@ class NL2Tag
      */
     private function hasToPreserve(array $open_tags): bool
     {
-        return $this->hasOpenTags($open_tags, array_unique(array_merge(self::PRESERVE_SPACE_IN, $this->preserve_spaces_in)));
+        return $this->hasOpenTags($open_tags, \array_unique(\array_merge(self::PRESERVE_SPACE_IN, $this->preserve_spaces_in)));
     }
     
     /**
@@ -612,7 +612,7 @@ class NL2Tag
      */
     private function hasOpenWrappers(array $open_tags): bool
     {
-        return $this->hasOpenTags($open_tags, array_unique(array_merge(self::WRAPPER_ONLY, $this->wrapper_only)));
+        return $this->hasOpenTags($open_tags, \array_unique(\array_merge(self::WRAPPER_ONLY, $this->wrapper_only)));
     }
     
     /**
@@ -624,7 +624,7 @@ class NL2Tag
      */
     private function hasOpenInsideWrappers(array $open_tags): bool
     {
-        return $this->hasOpenTags($open_tags, array_unique(array_merge(self::INSIDE_WRAPPERS_ONLY, $this->inside_wrappers_only)));
+        return $this->hasOpenTags($open_tags, \array_unique(\array_merge(self::INSIDE_WRAPPERS_ONLY, $this->inside_wrappers_only)));
     }
     
     /**
@@ -637,8 +637,8 @@ class NL2Tag
      */
     private function hasOpenTags(array $open_tags, array $list): bool
     {
-        $open_tags = array_keys($open_tags);
-        return array_any($open_tags, static fn($tag) => in_array(mb_strtolower($tag, 'UTF-8'), $list, true));
+        $open_tags = \array_keys($open_tags);
+        return \array_any($open_tags, static fn($tag) => in_array(mb_strtolower($tag, 'UTF-8'), $list, true));
     }
     
     /**
@@ -651,7 +651,7 @@ class NL2Tag
     {
         #Check for tags, which are not phrasing content. Checking only for opening tags, since orphaned closing tags can trigger this,
         #but we do not care for them, since normally they won't break the HTML
-        return preg_match('/<(?!p|\/|'.implode('|', array_unique(array_merge(self::PHRASING_CONTENT, $this->phrasing_content))).')[^>]*>/ui', $string) === 1;
+        return \preg_match('/<(?!p|\/|'.\implode('|', \array_unique(\array_merge(self::PHRASING_CONTENT, $this->phrasing_content))).')[^>]*>/ui', $string) === 1;
     }
     
     /**
@@ -664,7 +664,7 @@ class NL2Tag
     {
         #Check for tags, which are not flow content. Checking only for opening tags, since orphaned closing tags can trigger this,
         #but we do not care for them, since normally they won't break the HTML
-        return preg_match('/<(?!p|\/|'.implode('|', array_unique(array_merge(self::FLOW_CONTENT, $this->flow_content))).')[^>]*>/ui', $string) === 1;
+        return \preg_match('/<(?!p|\/|'.\implode('|', \array_unique(\array_merge(self::FLOW_CONTENT, $this->flow_content))).')[^>]*>/ui', $string) === 1;
     }
     
     /**
@@ -676,15 +676,15 @@ class NL2Tag
     private function hasUnclosedTags(string $string): array
     {
         #Get all opening tags. This will also match self-closing tags, if they have "/" at the end or do not use it at all
-        preg_match_all('/<([a-zA-Z\-]+)(\s*\/?| [^<>]+)?>/ui', $string, $found_tags, PREG_PATTERN_ORDER);
+        \preg_match_all('/<([a-zA-Z\-]+)(\s*\/?| [^<>]+)?>/ui', $string, $found_tags, \PREG_PATTERN_ORDER);
         $opening_tags = $found_tags[0];
         #Get all closing tags. This will also match self-closing tags, if they have "/" at the beginning
-        preg_match_all('/<\/([a-zA-Z\-]+)\s*>/ui', $string, $found_tags, PREG_PATTERN_ORDER);
+        \preg_match_all('/<\/([a-zA-Z\-]+)\s*>/ui', $string, $found_tags, \PREG_PATTERN_ORDER);
         $closing_tags = $found_tags[0];
         #Remove all self-closing tags from opening tags
         foreach ($opening_tags as $key => $tag) {
             #Get the real tag name
-            $tag = mb_strtolower(preg_replace('/<([a-zA-Z\-]+)(\s*\/?| [^<>]+)?>/ui', '$1', $tag), 'UTF-8');
+            $tag = mb_strtolower(\preg_replace('/<([a-zA-Z\-]+)(\s*\/?| [^<>]+)?>/ui', '$1', $tag), 'UTF-8');
             #Check if self-closing
             if (in_array($tag, self::VOID_ELEMENTS, true)) {
                 #Remove from the array
@@ -696,7 +696,7 @@ class NL2Tag
         #Remove all self-closing tags from closing tags
         foreach ($closing_tags as $key => $tag) {
             #Get the real tag name
-            $tag = mb_strtolower(preg_replace('/<\/([a-zA-Z\-]+)\s*>/ui', '$1', $tag), 'UTF-8');
+            $tag = mb_strtolower(\preg_replace('/<\/([a-zA-Z\-]+)\s*>/ui', '$1', $tag), 'UTF-8');
             #Check if self-closing
             if (in_array($tag, self::VOID_ELEMENTS, true)) {
                 #Remove from the array
@@ -707,8 +707,8 @@ class NL2Tag
         }
         #Count unique tags
         $unique_tags = [
-            'opening' => array_count_values($opening_tags),
-            'closing' => array_count_values($closing_tags),
+            'opening' => \array_count_values($opening_tags),
+            'closing' => \array_count_values($closing_tags),
         ];
         #Compare arrays and leave only tags, that are unmatched
         foreach ($unique_tags['opening'] as $tag => $count) {
