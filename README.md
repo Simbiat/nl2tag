@@ -152,4 +152,4 @@ Will result in HTML like this (whitespace added between tags for readability, re
 </ul>
 ```
 
-If styled, you can get a nice-looking changelog, for example, like what you see [here](https://www.simbiat.dev/talks/posts/123).
+If styled, you can get a nice-looking changelog, for example, like what you see [here](https://www.simbiat.eu/talks/posts/123).
