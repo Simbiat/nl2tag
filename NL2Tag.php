@@ -158,13 +158,13 @@ class NL2Tag
     private function magic(string $string, #[ExpectedValues(['p', 'li', 'br'])] string $wrapper = 'p', #[ExpectedValues(['ul', 'ol', 'menu'])] string $list_type = 'ul', bool $changelog = false): string
     {
         // Force lower case for a wrapper type
-        $wrapper = mb_strtolower($wrapper, 'UTF-8');
-        if (!in_array($wrapper, ['p', 'li', 'br'])) {
+        $wrapper = \mb_strtolower($wrapper, 'UTF-8');
+        if (!\in_array($wrapper, ['p', 'li', 'br'])) {
             throw new \UnexpectedValueException('Unsupported wrapper tag type `'.$wrapper.'` provided.');
         }
         // Force lower case for list type
-        $list_type = mb_strtolower($list_type, 'UTF-8');
-        if (!in_array($list_type, ['menu', 'ol', 'ul'])) {
+        $list_type = \mb_strtolower($list_type, 'UTF-8');
+        if (!\in_array($list_type, ['menu', 'ol', 'ul'])) {
             throw new \UnexpectedValueException('Unsupported list type `'.$list_type.'` provided.');
         }
         // Trim new lines
@@ -233,7 +233,7 @@ class NL2Tag
         // Process line by line
         foreach ($split_string as $part) {
             // Check if string has non-flow (for lists) or non-phrasing (for paragraphs) content. This is not required for <br>
-            if (in_array($wrapper, ['p', 'li'])) {
+            if (\in_array($wrapper, ['p', 'li'])) {
                 $has_not_allowed_current = match ($wrapper) {
                     'p' => $this->hasNonPhrasing($part),
                     'li' => $this->hasNonFlow($part),
@@ -406,7 +406,7 @@ class NL2Tag
         $html = new \DOMDocument(encoding: 'UTF-8');
         // mb_encode_numericentity is done as per workaround for UTF-8 loss/corruption on load from https://stackoverflow.com/questions/8218230/php-domdocument-loadhtml-not-encoding-utf-8-correctly
         // LIBXML_HTML_NOIMPLIED and LIBXML_HTML_NOTED to avoid adding wrappers (html, body, DTD). This will also allow fewer issues in case string has both regular HTML and some regular text (outside any tags). LIBXML_NOBLANKS to remove empty tags if any. LIBXML_PARSEHUGE to allow processing of larger strings. LIBXML_COMPACT for some potential optimization. LIBXML_NOWARNING and LIBXML_NOERROR to suppress warning in case of malformed HTML. LIBXML_NONET to protect from unsolicited connections to external sources.
-        $html->loadHTML(mb_encode_numericentity($string, [0x80, 0x10FFFF, 0, 0x1FFFFF], 'UTF-8'), \LIBXML_HTML_NOIMPLIED | \LIBXML_HTML_NODEFDTD | \LIBXML_NOBLANKS | \LIBXML_PARSEHUGE | \LIBXML_COMPACT | \LIBXML_NOWARNING | \LIBXML_NOERROR | \LIBXML_NONET);
+        $html->loadHTML(\mb_encode_numericentity($string, [0x80, 0x10FFFF, 0, 0x1FFFFF], 'UTF-8'), \LIBXML_HTML_NOIMPLIED | \LIBXML_HTML_NODEFDTD | \LIBXML_NOBLANKS | \LIBXML_PARSEHUGE | \LIBXML_COMPACT | \LIBXML_NOWARNING | \LIBXML_NOERROR | \LIBXML_NONET);
         $html->preserveWhiteSpace = false;
         $html->formatOutput = false;
         $html->normalizeDocument();
@@ -459,7 +459,7 @@ class NL2Tag
      */
     private function wrapChangelog(string $string, string $changelog_type): string
     {
-        if (!in_array($changelog_type, ['*', '+', '-'])) {
+        if (!\in_array($changelog_type, ['*', '+', '-'])) {
             throw new \UnexpectedValueException('Unsupported changelog type `'.$changelog_type.'` provided.');
         }
         return match ($changelog_type) {
@@ -639,7 +639,7 @@ class NL2Tag
     private function hasOpenTags(array $open_tags, array $list): bool
     {
         $open_tags = \array_keys($open_tags);
-        return \array_any($open_tags, static fn($tag) => in_array(mb_strtolower($tag, 'UTF-8'), $list, true));
+        return \array_any($open_tags, static fn($tag) => \in_array(\mb_strtolower($tag, 'UTF-8'), $list, true));
     }
 
     /**
@@ -685,9 +685,9 @@ class NL2Tag
         // Remove all self-closing tags from opening tags
         foreach ($opening_tags as $key => $tag) {
             // Get the real tag name
-            $tag = mb_strtolower(\preg_replace('/<([a-zA-Z\-]+)(\s*\/?| [^<>]+)?>/ui', '$1', $tag), 'UTF-8');
+            $tag = \mb_strtolower(\preg_replace('/<([a-zA-Z\-]+)(\s*\/?| [^<>]+)?>/ui', '$1', $tag), 'UTF-8');
             // Check if self-closing
-            if (in_array($tag, self::VOID_ELEMENTS, true)) {
+            if (\in_array($tag, self::VOID_ELEMENTS, true)) {
                 // Remove from the array
                 unset($opening_tags[$key]);
             } else {
@@ -697,9 +697,9 @@ class NL2Tag
         // Remove all self-closing tags from closing tags
         foreach ($closing_tags as $key => $tag) {
             // Get the real tag name
-            $tag = mb_strtolower(\preg_replace('/<\/([a-zA-Z\-]+)\s*>/ui', '$1', $tag), 'UTF-8');
+            $tag = \mb_strtolower(\preg_replace('/<\/([a-zA-Z\-]+)\s*>/ui', '$1', $tag), 'UTF-8');
             // Check if self-closing
-            if (in_array($tag, self::VOID_ELEMENTS, true)) {
+            if (\in_array($tag, self::VOID_ELEMENTS, true)) {
                 // Remove from the array
                 unset($closing_tags[$key]);
             } else {

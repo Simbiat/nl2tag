@@ -1,7 +1,12 @@
 {
     "name": "simbiat/nl2tag",
     "type": "library",
-    "keywords": ["nl2p","php","html", "nl2br"],
+    "keywords": [
+        "nl2p",
+        "php",
+        "html",
+        "nl2br"
+    ],
     "description": "Class to convert new lines to different HTML tags",
     "homepage": "https://github.com/Simbiat/nl2tag",
     "license": "AGPL-3.0-or-later",
