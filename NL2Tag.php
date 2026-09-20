@@ -15,21 +15,25 @@ class NL2Tag
 {
     /**
      * List of new lines for the respective regex. \R is the main thing, but since we are dealing with HTML, we can also have HTML entities, that we also need to deal with
+     *
      * @var string
      */
     public const string NEW_LINES_REGEX = '&#10;|&#11;|&#12;|&#13;|&#133;|&#8232;|&#8233;|\R';
     /**
      * List of self-closing tags
+     *
      * @var array|string[]
      */
     public const array VOID_ELEMENTS = ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'];
     /**
      * Common tags, in which you may want to preserve the new lines
+     *
      * @var array|string[]
      */
     public const array PRESERVE_SPACE_IN = ['pre', 'textarea', 'code', 'samp', 'kbd', 'var'];
     /**
      * Modifiable list of tags, inside which we preserve spaces
+     *
      * @var array|string[]
      */
     public array $preserve_spaces_in = [];
@@ -45,11 +49,13 @@ class NL2Tag
         'span', 'strong', 'sub', 'sup', 'svg', 'template', 'textarea', 'time', 'u', 'var', 'video', 'wbr'];
     /**
      * Modifiable list of tags, that area allowed in `p`
+     *
      * @var array|string[]
      */
     public array $phrasing_content = [];
     /**
      * Tags that are allowed in `li`, except for `area`, `link`, `main` and `meta`, that may be included under certain conditions.
+     *
      * @var array|string[]
      */
     public const array FLOW_CONTENT = ['a', 'abbr', 'address', 'article', 'aside', 'audio', 'b', 'bdi', 'bdo', 'blockquote', 'br', 'button', 'canvas', 'cite', 'code',
@@ -60,47 +66,56 @@ class NL2Tag
         'u', 'ul', 'var', 'video', 'wbr'];
     /**
      * Modifiable list of tags that are allowed in `li`
+     *
      * @var array|string[]
      */
     public array $flow_content = [];
     /**
      * Tags, which are used only as wrappers and would generally have whitespace for readability only
+     *
      * @var array|string[]
      */
     public const array WRAPPER_ONLY = ['audio', 'col', 'colgroup', 'datalist', 'dl', 'fieldset', 'map', 'math', 'menu', 'ol', 'optgroup', 'picture', 'select', 'table', 'tbody', 'tfooter', 'thead', 'tr', 'ul', 'video',];
     /**
      * Modifiable list of tags, which are used only as wrappers and would generally have whitespace for readability only
+     *
      * @var array|string[]
      */
     public array $wrapper_only = [];
     /**
      * Tags, that are always expected to be inside wrappers and can have meaningful whitespace in them
+     *
      * @var array|string[]
      */
     public const array INSIDE_WRAPPERS_ONLY = ['caption', 'dd', 'dt', 'li', 'option', 'td', 'th'];
     /**
      * Modifiable list of tags, that are always expected to be inside wrappers and can have meaningful whitespace in them
+     *
      * @var array|string[]
      */
     public array $inside_wrappers_only = [];
     /**
      * Flag to add <br> when we have non-phrasing content while wrapping n paragraph or inside tags, where we do not preserve newlines
+     *
      * @var bool
      */
     public bool $situational_br = true;
     /**
      * Flag to indicate that we want to collapse new lines. This will replace multiple <br> and remove empty paragraphs and list items
+     *
      * @var bool
      */
     public bool $collapse_new_lines = true;
     /**
      * Flag to preserve empty paragraphs with non-breaking space. Can be useful, when you use something like `<p>&nbsp;</p> for visual separation of text.
+     *
      * @var bool
      */
     public bool $preserve_non_breaking_space = false;
 
     /**
      * Convert new lines to `br` tags
+     *
      * @param string $string
      *
      * @return string
@@ -112,6 +127,7 @@ class NL2Tag
 
     /**
      * Convert new lines to `p` tags
+     *
      * @param string $string
      *
      * @return string
@@ -136,6 +152,7 @@ class NL2Tag
 
     /**
      * The same as `nl2li` but if the first character is not one of `*`, `+` or `-` a sublist (that is new `<ul>`) will be started until another line like that or the end of string will be encountered.
+     *
      * @param string $string
      *
      * @return string
@@ -188,6 +205,7 @@ class NL2Tag
                     // Return as is
                     return $string;
                 }
+
                 // Return wrapped in <p>
                 return '<p>'.$string.'</p>';
             }
@@ -198,7 +216,11 @@ class NL2Tag
                     return $string;
                 }
                 // Check if it's already a list
-                if ($this->isWrapped($string, 'ul') || $this->isWrapped($string, 'ol') || $this->isWrapped($string, 'menu')) {
+                if (
+                    $this->isWrapped($string, 'ul')
+                    || $this->isWrapped($string, 'ol')
+                    || $this->isWrapped($string, 'menu')
+                ) {
                     // Return as is
                     return $string;
                 }
@@ -206,11 +228,24 @@ class NL2Tag
                 if ($changelog) {
                     return '<'.$list_type.' class="changelog_list"><li class="changelog_change">'.$string.'</li></'.$list_type.'>';
                 }
+
                 return '<'.$list_type.'><li>'.$string.'</li></'.$list_type.'>';
             }
         }
         // Check if it's already a paragraph or list
-        if (($wrapper === 'p' && $this->isWrapped($string)) || ($wrapper === 'li' && ($this->isWrapped($string, 'ul') || $this->isWrapped($string, 'ol')))) {
+        if (
+            (
+                $wrapper === 'p'
+                && $this->isWrapped($string)
+            )
+            || (
+                $wrapper === 'li'
+                && (
+                    $this->isWrapped($string, 'ul')
+                    || $this->isWrapped($string, 'ol')
+                )
+            )
+        ) {
             // Return as is
             return $string;
         }
@@ -239,18 +274,28 @@ class NL2Tag
                     'li' => $this->hasNonFlow($part),
                 };
                 // If any of the previous lines had non-flow or non-phrasing content, we need to set the respective flag as such.
-                if ($has_not_allowed || $has_not_allowed_current) {
+                if (
+                    $has_not_allowed
+                    || $has_not_allowed_current
+                ) {
                     $has_not_allowed = true;
                 }
             }
             // Check if string has any non-closed tags
             $unclosed_current = $this->hasUnclosedTags($part);
-            if ($wrapper === 'li' && $changelog) {
+            if (
+                $wrapper === 'li'
+                && $changelog
+            ) {
                 // Get the changelog type
                 $changelog_type = $this->getChangelogType($between_tags_string.$part);
             }
             // Check if we have any unmatched tags on either current or previous line
-            if (empty($unclosed_current['opening']) && empty($unclosed_current['closing']) && empty($unclosed_previous)) {
+            if (
+                empty($unclosed_current['opening'])
+                && empty($unclosed_current['closing'])
+                && empty($unclosed_previous)
+            ) {
                 // Check if the line is a set of newlines or other whitespace
                 if (\preg_match('/^('.self::NEW_LINES_REGEX.'|\s|\p{C})*$/ui', $part) === 1) {
                     // If we are here, it means, that we are outside any tags or text nodes, which are probably already wrapped (or do not need wrapping).
@@ -274,7 +319,10 @@ class NL2Tag
                 } elseif ($wrapper === 'li') {
                     if ($this->isWrapped($part, 'li')) {
                         $new_string .= $part;
-                    } elseif ($changelog && !empty($changelog_type)) {
+                    } elseif (
+                        $changelog
+                        && !empty($changelog_type)
+                    ) {
                         if ($changelog_type === 'ul') {
                             // Check if we already have open sub-list
                             if ($open_changelog_sublist) {
@@ -294,6 +342,7 @@ class NL2Tag
                 }
                 // Reset the flag for non-flow/non-phrasing content
                 $has_not_allowed = false;
+
                 continue;
             }
             // If we have unmatched closing tags on current line, check if we had any unmatched opening tags on previous line(s)
@@ -316,7 +365,10 @@ class NL2Tag
                 } elseif ($wrapper === 'li') {
                     if ($this->isWrapped($part)) {
                         $new_string .= $between_tags_string.$part;
-                    } elseif ($changelog && !empty($changelog_type)) {
+                    } elseif (
+                        $changelog
+                        && !empty($changelog_type)
+                    ) {
                         if ($changelog_type === 'ul') {
                             // Check if we already have open sub-list
                             if ($open_changelog_sublist) {
@@ -343,7 +395,13 @@ class NL2Tag
                 // Add <br> to the line, if we do not have tags, that need new lines preservation and user agreed to add extra <br> tags
                 if ($this->hasToPreserve($unclosed_previous)) {
                     $between_tags_string .= $part;
-                } elseif ($this->situational_br && (!$this->hasOpenWrappers($unclosed_previous) || $this->hasOpenInsideWrappers($unclosed_previous))) {
+                } elseif (
+                    $this->situational_br
+                    && (
+                        !$this->hasOpenWrappers($unclosed_previous)
+                        || $this->hasOpenInsideWrappers($unclosed_previous)
+                    )
+                ) {
                     $between_tags_string .= '<br>';
                 }
             } else {
@@ -356,7 +414,11 @@ class NL2Tag
             $new_string .= $between_tags_string;
         }
         // If we had any sub-lists, there will be an unclosed ul, which we need to close
-        if ($wrapper === 'li' && $changelog && $open_changelog_sublist) {
+        if (
+            $wrapper === 'li'
+            && $changelog
+            && $open_changelog_sublist
+        ) {
             $new_string .= '</ul>';
         }
         // Trim potentially excessive <br> tags
@@ -383,12 +445,14 @@ class NL2Tag
         $new_string = \preg_replace('/(<(?>blockquote[^>]*)>)(?>(?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<\/?br\s*\/?\s*>)*/ui', '$1', $new_string);
         // With this we trim before the closing tags of the above-mentioned elements
         $new_string = \preg_replace('/(?>(?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<\/?br\s*\/?\s*>)*(<\/(?>blockquote|details|summary))/ui', '$1', $new_string);
+
         // Elements that are supposed to have preserve spaces, should not have <br> elements in them, so we remove them as well
         return $this->removeBRs($new_string);
     }
 
     /**
      * Elements that are supposed to have preserve spaces, should not have <br> elements in them, so we remove them as well
+     *
      * @param string $string
      *
      * @return string
@@ -428,11 +492,13 @@ class NL2Tag
         if (!$wrapped_in_html) {
             $cleaned_html = \preg_replace('/(^\s*<html( [^<>]*)?>)(.*)(<\/html>\s*$)/uis', '$3', $cleaned_html);
         }
+
         return \preg_replace('/(^\s*<html( [^<>]*)?>)(.*)(<\/html>\s*$)/uis', '$3', $cleaned_html);
     }
 
     /**
      * Function to determine the changelog entry type for string
+     *
      * @param string $string
      *
      * @return string
@@ -443,6 +509,7 @@ class NL2Tag
         $string = \strip_tags($string);
         // Get first non-whitespace character
         $character = \preg_replace('/^([\s\p{C}]*)(\S)(.*)$/ui', '$2', $string);
+
         return match ($character) {
             '*', '-', '+' => $character,
             default => 'ul',
@@ -462,6 +529,7 @@ class NL2Tag
         if (!\in_array($changelog_type, ['*', '+', '-'])) {
             throw new \UnexpectedValueException('Unsupported changelog type `'.$changelog_type.'` provided.');
         }
+
         return match ($changelog_type) {
             '*' => '<li class="changelog_change">'.$this->trimBRs($this->removeChangelogType($string)).'</li>',
             '+' => '<li class="changelog_addition">'.$this->trimBRs($this->removeChangelogType($string)).'</li>',
@@ -471,6 +539,7 @@ class NL2Tag
 
     /**
      * Function to remove character for the changelog type from string
+     *
      * @param string $string
      *
      * @return string
@@ -490,7 +559,10 @@ class NL2Tag
      */
     private function closeUnclosed(array &$unclosed_previous, array &$unclosed_current): void
     {
-        if (!empty($unclosed_current['closing']) && !empty($unclosed_previous)) {
+        if (
+            !empty($unclosed_current['closing'])
+            && !empty($unclosed_previous)
+        ) {
             foreach ($unclosed_current['closing'] as $tag => $count) {
                 if (isset($unclosed_previous[$tag])) {
                     $unclosed_previous[$tag] -= $unclosed_current['closing'][$tag];
@@ -528,6 +600,7 @@ class NL2Tag
 
     /**
      * Function to trim new lines from beginning and end of string
+     *
      * @param string $string
      *
      * @return string
@@ -539,6 +612,7 @@ class NL2Tag
 
     /**
      * Function to trim `<br>` from beginning and end of string
+     *
      * @param string $string
      *
      * @return string
@@ -550,6 +624,7 @@ class NL2Tag
 
     /**
      * Function to collapse new lines
+     *
      * @param string $string
      *
      * @return string
@@ -565,11 +640,13 @@ class NL2Tag
             // Since \p{Z} and \h, which are part of \s, include non-breaking space, we have to expand them
             return \preg_replace('/\s*<p\s*([^<>]+)?>[\v\p{C}\x{0020}\x{1680}\x{180E}\x{2000}\x{2001}\x{2002}\x{2003}\x{2004}\x{2005}\x{2006}\x{2007}\x{2008}\x{2009}\x{200A}\x{200B}\x{2028}\x{2029}\x{202F}\x{205F}\x{3000}\x{FEFF}]*<\/p\s*>\s*/ui', '', $string);
         }
+
         return \preg_replace('/\s*<p\s*([^<>]+)?>[\s\p{C}]*<\/p\s*>\s*/ui', '', $string);
     }
 
     /**
      * Function to check if string has any new lines
+     *
      * @param string $string
      *
      * @return bool
@@ -577,11 +654,13 @@ class NL2Tag
     private function hasNewLines(string $string): bool
     {
         $result = \preg_match('/'.self::NEW_LINES_REGEX.'/ui', $string);
+
         return $result === 1;
     }
 
     /**
      * Function to check if string is already wrapped in a tag
+     *
      * @param string $string String to check
      * @param string $tag    Tag to check against
      *
@@ -639,11 +718,13 @@ class NL2Tag
     private function hasOpenTags(array $open_tags, array $list): bool
     {
         $open_tags = \array_keys($open_tags);
+
         return \array_any($open_tags, static fn($tag) => \in_array(\mb_strtolower($tag, 'UTF-8'), $list, true));
     }
 
     /**
      * Function to check if string has non-phrasing content tags
+     *
      * @param string $string
      *
      * @return bool
@@ -657,6 +738,7 @@ class NL2Tag
 
     /**
      * Function to check if string has non-phrasing content tags
+     *
      * @param string $string
      *
      * @return bool
@@ -670,6 +752,7 @@ class NL2Tag
 
     /**
      * Function to check if string has unclosed tags
+     *
      * @param string $string
      *
      * @return array
@@ -713,16 +796,23 @@ class NL2Tag
         ];
         // Compare arrays and leave only tags, that are unmatched
         foreach ($unique_tags['opening'] as $tag => $count) {
-            if (isset($unique_tags['closing'][$tag]) && $unique_tags['closing'][$tag] === $count) {
+            if (
+                isset($unique_tags['closing'][$tag])
+                && $unique_tags['closing'][$tag] === $count
+            ) {
                 unset($unique_tags['opening'][$tag], $unique_tags['closing'][$tag]);
             }
         }
         // Do the same for the closing tags, too. Not sure if we can get any "hits" on this cycle, but my gut feeling says, that we better check
         foreach ($unique_tags['closing'] as $tag => $count) {
-            if (isset($unique_tags['opening'][$tag]) && $unique_tags['opening'][$tag] === $count) {
+            if (
+                isset($unique_tags['opening'][$tag])
+                && $unique_tags['opening'][$tag] === $count
+            ) {
                 unset($unique_tags['closing'][$tag], $unique_tags['opening'][$tag]);
             }
         }
+
         return $unique_tags;
     }
 }
