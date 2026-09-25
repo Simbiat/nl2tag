@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Simbiat\HTML;
 
 use JetBrains\PhpStorm\ExpectedValues;
-use JetBrains\PhpStorm\Pure;
-use function in_array;
 
 /**
  * Class to convert new lines to various HTML tags: `br`, `p` and `li`.
@@ -16,19 +14,16 @@ class NL2Tag
     /**
      * List of new lines for the respective regex. \R is the main thing, but since we are dealing with HTML, we can also have HTML entities, that we also need to deal with
      *
-     * @var string
      */
     public const string NEW_LINES_REGEX = '&#10;|&#11;|&#12;|&#13;|&#133;|&#8232;|&#8233;|\R';
     /**
      * List of self-closing tags
      *
-     * @var array|string[]
      */
     public const array VOID_ELEMENTS = ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'];
     /**
      * Common tags, in which you may want to preserve the new lines
      *
-     * @var array|string[]
      */
     public const array PRESERVE_SPACE_IN = ['pre', 'textarea', 'code', 'samp', 'kbd', 'var'];
     /**
@@ -37,55 +32,55 @@ class NL2Tag
      * @var array|string[]
      */
     public array $preserve_spaces_in = [];
+
     /**
      * Tags that are allowed in `p`, except for `area`, `link` and `meta`, that may be included under certain conditions.
      * Add them manually (`setPhrasingContent`) along with any other custom tags, if you know that they can be in the piece of text you are parsing.
      *
-     * @var array|string[]
      */
     public const array PHRASING_CONTENT = ['a', 'abbr', 'audio', 'b', 'bdi', 'bdo', 'br', 'button', 'canvas', 'cite', 'code', 'data', 'datalist',
         'del', 'dfn', 'em', 'embed', 'i', 'iframe', 'img', 'input', 'ins', 'kbd', 'label', 'map', 'mark', 'math', 'meter',
         'noscript', 'object', 'output', 'picture', 'progress', 'q', 'ruby', 's', 'samp', 'script', 'select', 'slot', 'small',
-        'span', 'strong', 'sub', 'sup', 'svg', 'template', 'textarea', 'time', 'u', 'var', 'video', 'wbr'];
+        'span', 'strong', 'sub', 'sup', 'svg', 'template', 'textarea', 'time', 'u', 'var', 'video', 'wbr',];
     /**
      * Modifiable list of tags, that area allowed in `p`
      *
      * @var array|string[]
      */
     public array $phrasing_content = [];
+
     /**
      * Tags that are allowed in `li`, except for `area`, `link`, `main` and `meta`, that may be included under certain conditions.
      *
-     * @var array|string[]
      */
     public const array FLOW_CONTENT = ['a', 'abbr', 'address', 'article', 'aside', 'audio', 'b', 'bdi', 'bdo', 'blockquote', 'br', 'button', 'canvas', 'cite', 'code',
         'data', 'datalist', 'del', 'details', 'dfn', 'dialog', 'div', 'dl', 'em', 'embed', 'fieldset', 'figure', 'footer', 'form',
         'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hgroup', 'hr', 'i', 'iframe', 'img', 'input', 'ins', 'kbd', 'label', 'main', 'map',
         'mark', 'math', 'menu', 'meter', 'nav', 'noscript', 'object', 'ol', 'output', 'p', 'picture', 'pre', 'progress', 'q', 'ruby', 's',
         'samp', 'script', 'section', 'select', 'slot', 'small', 'span', 'strong', 'sub', 'sup', 'svg', 'table', 'template', 'textarea', 'time',
-        'u', 'ul', 'var', 'video', 'wbr'];
+        'u', 'ul', 'var', 'video', 'wbr',];
     /**
      * Modifiable list of tags that are allowed in `li`
      *
      * @var array|string[]
      */
     public array $flow_content = [];
+
     /**
      * Tags, which are used only as wrappers and would generally have whitespace for readability only
      *
-     * @var array|string[]
      */
-    public const array WRAPPER_ONLY = ['audio', 'col', 'colgroup', 'datalist', 'dl', 'fieldset', 'map', 'math', 'menu', 'ol', 'optgroup', 'picture', 'select', 'table', 'tbody', 'tfooter', 'thead', 'tr', 'ul', 'video',];
+    public const array WRAPPER_ONLY = ['audio', 'col', 'colgroup', 'datalist', 'dl', 'fieldset', 'map', 'math', 'menu', 'ol', 'optgroup', 'picture', 'select', 'table', 'tbody', 'tfooter', 'thead', 'tr', 'ul', 'video'];
     /**
      * Modifiable list of tags, which are used only as wrappers and would generally have whitespace for readability only
      *
      * @var array|string[]
      */
     public array $wrapper_only = [];
+
     /**
      * Tags, that are always expected to be inside wrappers and can have meaningful whitespace in them
      *
-     * @var array|string[]
      */
     public const array INSIDE_WRAPPERS_ONLY = ['caption', 'dd', 'dt', 'li', 'option', 'td', 'th'];
     /**
@@ -94,18 +89,21 @@ class NL2Tag
      * @var array|string[]
      */
     public array $inside_wrappers_only = [];
+
     /**
      * Flag to add <br> when we have non-phrasing content while wrapping n paragraph or inside tags, where we do not preserve newlines
      *
      * @var bool
      */
     public bool $situational_br = true;
+
     /**
      * Flag to indicate that we want to collapse new lines. This will replace multiple <br> and remove empty paragraphs and list items
      *
      * @var bool
      */
     public bool $collapse_new_lines = true;
+
     /**
      * Flag to preserve empty paragraphs with non-breaking space. Can be useful, when you use something like `<p>&nbsp;</p> for visual separation of text.
      *
@@ -791,8 +789,8 @@ class NL2Tag
         }
         // Count unique tags
         $unique_tags = [
-            'opening' => \array_count_values($opening_tags),
             'closing' => \array_count_values($closing_tags),
+            'opening' => \array_count_values($opening_tags),
         ];
         // Compare arrays and leave only tags, that are unmatched
         foreach ($unique_tags['opening'] as $tag => $count) {
