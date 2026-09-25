@@ -9,7 +9,7 @@ use JetBrains\PhpStorm\ExpectedValues;
 /**
  * Class to convert new lines to various HTML tags: `br`, `p` and `li`.
  */
-class NL2Tag
+final class NL2Tag
 {
     /**
      * List of new lines for the respective regex. \R is the main thing, but since we are dealing with HTML, we can also have HTML entities, that we also need to deal with
@@ -251,11 +251,7 @@ class NL2Tag
         $split_string = \preg_split('/('.self::NEW_LINES_REGEX.')+/ui', $string, -1, \PREG_SPLIT_DELIM_CAPTURE);
         // Prepare some variables
         if ($wrapper === 'li') {
-            if ($changelog) {
-                $new_string = '<ul class="changelog_list">';
-            } else {
-                $new_string = '<ul>';
-            }
+            $new_string = $changelog ? '<ul class="changelog_list">' : '<ul>';
         } else {
             $new_string = '';
         }
