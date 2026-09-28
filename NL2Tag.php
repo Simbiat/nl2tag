@@ -13,80 +13,210 @@ final class NL2Tag
 {
     /**
      * List of new lines for the respective regex. \R is the main thing, but since we are dealing with HTML, we can also have HTML entities, that we also need to deal with
-     *
      */
     public const string NEW_LINES_REGEX = '&#10;|&#11;|&#12;|&#13;|&#133;|&#8232;|&#8233;|\R';
+
     /**
      * List of self-closing tags
-     *
      */
     public const array VOID_ELEMENTS = ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'];
+
     /**
      * Common tags, in which you may want to preserve the new lines
-     *
      */
     public const array PRESERVE_SPACE_IN = ['pre', 'textarea', 'code', 'samp', 'kbd', 'var'];
-    /**
-     * Modifiable list of tags, inside which we preserve spaces
-     *
-     * @var array|string[]
-     */
-    public array $preserve_spaces_in = [];
 
     /**
      * Tags that are allowed in `p`, except for `area`, `link` and `meta`, that may be included under certain conditions.
      * Add them manually (`setPhrasingContent`) along with any other custom tags, if you know that they can be in the piece of text you are parsing.
-     *
      */
-    public const array PHRASING_CONTENT = ['a', 'abbr', 'audio', 'b', 'bdi', 'bdo', 'br', 'button', 'canvas', 'cite', 'code', 'data', 'datalist',
-        'del', 'dfn', 'em', 'embed', 'i', 'iframe', 'img', 'input', 'ins', 'kbd', 'label', 'map', 'mark', 'math', 'meter',
-        'noscript', 'object', 'output', 'picture', 'progress', 'q', 'ruby', 's', 'samp', 'script', 'select', 'slot', 'small',
-        'span', 'strong', 'sub', 'sup', 'svg', 'template', 'textarea', 'time', 'u', 'var', 'video', 'wbr',];
+    public const array PHRASING_CONTENT = [
+        'a',
+        'abbr',
+        'audio',
+        'b',
+        'bdi',
+        'bdo',
+        'br',
+        'button',
+        'canvas',
+        'cite',
+        'code',
+        'data',
+        'datalist',
+        'del',
+        'dfn',
+        'em',
+        'embed',
+        'i',
+        'iframe',
+        'img',
+        'input',
+        'ins',
+        'kbd',
+        'label',
+        'map',
+        'mark',
+        'math',
+        'meter',
+        'noscript',
+        'object',
+        'output',
+        'picture',
+        'progress',
+        'q',
+        'ruby',
+        's',
+        'samp',
+        'script',
+        'select',
+        'slot',
+        'small',
+        'span',
+        'strong',
+        'sub',
+        'sup',
+        'svg',
+        'template',
+        'textarea',
+        'time',
+        'u',
+        'var',
+        'video',
+        'wbr',
+    ];
+
+    /**
+     * Tags that are allowed in `li`, except for `area`, `link`, `main` and `meta`, that may be included under certain conditions.
+     */
+    public const array FLOW_CONTENT = [
+        'a',
+        'abbr',
+        'address',
+        'article',
+        'aside',
+        'audio',
+        'b',
+        'bdi',
+        'bdo',
+        'blockquote',
+        'br',
+        'button',
+        'canvas',
+        'cite',
+        'code',
+        'data',
+        'datalist',
+        'del',
+        'details',
+        'dfn',
+        'dialog',
+        'div',
+        'dl',
+        'em',
+        'embed',
+        'fieldset',
+        'figure',
+        'footer',
+        'form',
+        'h1',
+        'h2',
+        'h3',
+        'h4',
+        'h5',
+        'h6',
+        'header',
+        'hgroup',
+        'hr',
+        'i',
+        'iframe',
+        'img',
+        'input',
+        'ins',
+        'kbd',
+        'label',
+        'main',
+        'map',
+        'mark',
+        'math',
+        'menu',
+        'meter',
+        'nav',
+        'noscript',
+        'object',
+        'ol',
+        'output',
+        'p',
+        'picture',
+        'pre',
+        'progress',
+        'q',
+        'ruby',
+        's',
+        'samp',
+        'script',
+        'section',
+        'select',
+        'slot',
+        'small',
+        'span',
+        'strong',
+        'sub',
+        'sup',
+        'svg',
+        'table',
+        'template',
+        'textarea',
+        'time',
+        'u',
+        'ul',
+        'var',
+        'video',
+        'wbr',
+    ];
+
+    /**
+     * Tags, which are used only as wrappers and would generally have whitespace for readability only
+     */
+    public const array WRAPPER_ONLY = ['audio', 'col', 'colgroup', 'datalist', 'dl', 'fieldset', 'map', 'math', 'menu', 'ol', 'optgroup', 'picture', 'select', 'table', 'tbody', 'tfooter', 'thead', 'tr', 'ul', 'video'];
+
+    /**
+     * Tags, that are always expected to be inside wrappers and can have meaningful whitespace in them
+     */
+    public const array INSIDE_WRAPPERS_ONLY = ['caption', 'dd', 'dt', 'li', 'option', 'td', 'th'];
+
+    /**
+     * Modifiable list of tags, inside which we preserve spaces
+     *
+     * @var array<string>
+     */
+    public array $preserve_spaces_in = [];
+
     /**
      * Modifiable list of tags, that area allowed in `p`
      *
-     * @var array|string[]
+     * @var array<string>
      */
     public array $phrasing_content = [];
 
     /**
-     * Tags that are allowed in `li`, except for `area`, `link`, `main` and `meta`, that may be included under certain conditions.
-     *
-     */
-    public const array FLOW_CONTENT = ['a', 'abbr', 'address', 'article', 'aside', 'audio', 'b', 'bdi', 'bdo', 'blockquote', 'br', 'button', 'canvas', 'cite', 'code',
-        'data', 'datalist', 'del', 'details', 'dfn', 'dialog', 'div', 'dl', 'em', 'embed', 'fieldset', 'figure', 'footer', 'form',
-        'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hgroup', 'hr', 'i', 'iframe', 'img', 'input', 'ins', 'kbd', 'label', 'main', 'map',
-        'mark', 'math', 'menu', 'meter', 'nav', 'noscript', 'object', 'ol', 'output', 'p', 'picture', 'pre', 'progress', 'q', 'ruby', 's',
-        'samp', 'script', 'section', 'select', 'slot', 'small', 'span', 'strong', 'sub', 'sup', 'svg', 'table', 'template', 'textarea', 'time',
-        'u', 'ul', 'var', 'video', 'wbr',];
-    /**
      * Modifiable list of tags that are allowed in `li`
      *
-     * @var array|string[]
+     * @var array<string>
      */
     public array $flow_content = [];
 
     /**
-     * Tags, which are used only as wrappers and would generally have whitespace for readability only
-     *
-     */
-    public const array WRAPPER_ONLY = ['audio', 'col', 'colgroup', 'datalist', 'dl', 'fieldset', 'map', 'math', 'menu', 'ol', 'optgroup', 'picture', 'select', 'table', 'tbody', 'tfooter', 'thead', 'tr', 'ul', 'video'];
-    /**
      * Modifiable list of tags, which are used only as wrappers and would generally have whitespace for readability only
      *
-     * @var array|string[]
+     * @var array<string>
      */
     public array $wrapper_only = [];
 
     /**
-     * Tags, that are always expected to be inside wrappers and can have meaningful whitespace in them
-     *
-     */
-    public const array INSIDE_WRAPPERS_ONLY = ['caption', 'dd', 'dt', 'li', 'option', 'td', 'th'];
-    /**
      * Modifiable list of tags, that are always expected to be inside wrappers and can have meaningful whitespace in them
      *
-     * @var array|string[]
+     * @var array<string>
      */
     public array $inside_wrappers_only = [];
 
@@ -251,7 +381,9 @@ final class NL2Tag
         $split_string = \preg_split('/('.self::NEW_LINES_REGEX.')+/ui', $string, -1, \PREG_SPLIT_DELIM_CAPTURE);
         // Prepare some variables
         if ($wrapper === 'li') {
-            $new_string = $changelog ? '<ul class="changelog_list">' : '<ul>';
+            $new_string = $changelog
+                ? '<ul class="changelog_list">'
+                : '<ul>';
         } else {
             $new_string = '';
         }
@@ -464,7 +596,12 @@ final class NL2Tag
         $html = new \DOMDocument(encoding: 'UTF-8');
         // mb_encode_numericentity is done as per workaround for UTF-8 loss/corruption on load from https://stackoverflow.com/questions/8218230/php-domdocument-loadhtml-not-encoding-utf-8-correctly
         // LIBXML_HTML_NOIMPLIED and LIBXML_HTML_NOTED to avoid adding wrappers (html, body, DTD). This will also allow fewer issues in case string has both regular HTML and some regular text (outside any tags). LIBXML_NOBLANKS to remove empty tags if any. LIBXML_PARSEHUGE to allow processing of larger strings. LIBXML_COMPACT for some potential optimization. LIBXML_NOWARNING and LIBXML_NOERROR to suppress warning in case of malformed HTML. LIBXML_NONET to protect from unsolicited connections to external sources.
-        $html->loadHTML(\mb_encode_numericentity($string, [0x80, 0x10FFFF, 0, 0x1FFFFF], 'UTF-8'), \LIBXML_HTML_NOIMPLIED | \LIBXML_HTML_NODEFDTD | \LIBXML_NOBLANKS | \LIBXML_PARSEHUGE | \LIBXML_COMPACT | \LIBXML_NOWARNING | \LIBXML_NOERROR | \LIBXML_NONET);
+        $html->loadHTML(\mb_encode_numericentity($string, [
+            0x80,
+            0x10FFFF,
+            0,
+            0x1FFFFF,
+        ], 'UTF-8'), \LIBXML_HTML_NOIMPLIED | \LIBXML_HTML_NODEFDTD | \LIBXML_NOBLANKS | \LIBXML_PARSEHUGE | \LIBXML_COMPACT | \LIBXML_NOWARNING | \LIBXML_NOERROR | \LIBXML_NONET);
         $html->preserveWhiteSpace = false;
         $html->formatOutput = false;
         $html->normalizeDocument();
