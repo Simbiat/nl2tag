@@ -12,17 +12,17 @@ use JetBrains\PhpStorm\ExpectedValues;
 final class NL2Tag
 {
     /**
-     * List of new lines for the respective regex. \R is the main thing, but since we are dealing with HTML, we can also have HTML entities, that we also need to deal with
+     * List of new lines for the respective regex. \R is the main thing, but since we are dealing with HTML, we can also have HTML entities, that we also need to deal with.
      */
     public const string NEW_LINES_REGEX = '&#10;|&#11;|&#12;|&#13;|&#133;|&#8232;|&#8233;|\R';
 
     /**
-     * List of self-closing tags
+     * List of self-closing tags.
      */
     public const array VOID_ELEMENTS = ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'];
 
     /**
-     * Common tags, in which you may want to preserve the new lines
+     * Common tags, in which you may want to preserve the new lines.
      */
     public const array PRESERVE_SPACE_IN = ['pre', 'textarea', 'code', 'samp', 'kbd', 'var'];
 
@@ -176,59 +176,59 @@ final class NL2Tag
     ];
 
     /**
-     * Tags, which are used only as wrappers and would generally have whitespace for readability only
+     * Tags, which are used only as wrappers and would generally have whitespace for readability only.
      */
     public const array WRAPPER_ONLY = ['audio', 'col', 'colgroup', 'datalist', 'dl', 'fieldset', 'map', 'math', 'menu', 'ol', 'optgroup', 'picture', 'select', 'table', 'tbody', 'tfooter', 'thead', 'tr', 'ul', 'video'];
 
     /**
-     * Tags, that are always expected to be inside wrappers and can have meaningful whitespace in them
+     * Tags, that are always expected to be inside wrappers and can have meaningful whitespace in them.
      */
     public const array INSIDE_WRAPPERS_ONLY = ['caption', 'dd', 'dt', 'li', 'option', 'td', 'th'];
 
     /**
-     * Modifiable list of tags, inside which we preserve spaces
+     * Modifiable list of tags, inside which we preserve spaces.
      *
      * @var array<string>
      */
     public array $preserve_spaces_in = [];
 
     /**
-     * Modifiable list of tags, that area allowed in `p`
+     * Modifiable list of tags, that area allowed in `p`.
      *
      * @var array<string>
      */
     public array $phrasing_content = [];
 
     /**
-     * Modifiable list of tags that are allowed in `li`
+     * Modifiable list of tags that are allowed in `li`.
      *
      * @var array<string>
      */
     public array $flow_content = [];
 
     /**
-     * Modifiable list of tags, which are used only as wrappers and would generally have whitespace for readability only
+     * Modifiable list of tags, which are used only as wrappers and would generally have whitespace for readability only.
      *
      * @var array<string>
      */
     public array $wrapper_only = [];
 
     /**
-     * Modifiable list of tags, that are always expected to be inside wrappers and can have meaningful whitespace in them
+     * Modifiable list of tags, that are always expected to be inside wrappers and can have meaningful whitespace in them.
      *
      * @var array<string>
      */
     public array $inside_wrappers_only = [];
 
     /**
-     * Flag to add <br> when we have non-phrasing content while wrapping n paragraph or inside tags, where we do not preserve newlines
+     * Flag to add <br> when we have non-phrasing content while wrapping n paragraph or inside tags, where we do not preserve newlines.
      *
      * @var bool
      */
     public bool $situational_br = true;
 
     /**
-     * Flag to indicate that we want to collapse new lines. This will replace multiple <br> and remove empty paragraphs and list items
+     * Flag to indicate that we want to collapse new lines. This will replace multiple <br> and remove empty paragraphs and list items.
      *
      * @var bool
      */
@@ -242,7 +242,7 @@ final class NL2Tag
     public bool $preserve_non_breaking_space = false;
 
     /**
-     * Convert new lines to `br` tags
+     * Convert new lines to `br` tags.
      *
      * @param string $string
      *
@@ -254,7 +254,7 @@ final class NL2Tag
     }
 
     /**
-     * Convert new lines to `p` tags
+     * Convert new lines to `p` tags.
      *
      * @param string $string
      *
@@ -266,7 +266,7 @@ final class NL2Tag
     }
 
     /**
-     * Convert new lines to `li` tags
+     * Convert new lines to `li` tags.
      *
      * @param string $string    String to process
      * @param string $list_type List type (`ul`, `ol` or `menu`)
@@ -291,7 +291,7 @@ final class NL2Tag
     }
 
     /**
-     * Function doing the main processing
+     * Function doing the main processing.
      *
      * @param string $string    String to process
      * @param string $wrapper   Wrapper to use (`p`, `li` or `br`)
@@ -304,12 +304,12 @@ final class NL2Tag
     {
         // Force lower case for a wrapper type
         $wrapper = \mb_strtolower($wrapper, 'UTF-8');
-        if (!\in_array($wrapper, ['p', 'li', 'br'])) {
+        if (!\in_array($wrapper, ['p', 'li', 'br'], true)) {
             throw new \UnexpectedValueException('Unsupported wrapper tag type `'.$wrapper.'` provided.');
         }
         // Force lower case for list type
         $list_type = \mb_strtolower($list_type, 'UTF-8');
-        if (!\in_array($list_type, ['menu', 'ol', 'ul'])) {
+        if (!\in_array($list_type, ['menu', 'ol', 'ul'], true)) {
             throw new \UnexpectedValueException('Unsupported list type `'.$list_type.'` provided.');
         }
         // Trim new lines
@@ -394,7 +394,7 @@ final class NL2Tag
         // Process line by line
         foreach ($split_string as $part) {
             // Check if string has non-flow (for lists) or non-phrasing (for paragraphs) content. This is not required for <br>
-            if (\in_array($wrapper, ['p', 'li'])) {
+            if (\in_array($wrapper, ['p', 'li'], true)) {
                 $has_not_allowed_current = match ($wrapper) {
                     'p' => $this->hasNonPhrasing($part),
                     'li' => $this->hasNonFlow($part),
@@ -577,7 +577,7 @@ final class NL2Tag
     }
 
     /**
-     * Elements that are supposed to have preserve spaces, should not have <br> elements in them, so we remove them as well
+     * Elements that are supposed to have preserve spaces, should not have <br> elements in them, so we remove them as well.
      *
      * @param string $string
      *
@@ -628,7 +628,7 @@ final class NL2Tag
     }
 
     /**
-     * Function to determine the changelog entry type for string
+     * Function to determine the changelog entry type for string.
      *
      * @param string $string
      *
@@ -648,7 +648,7 @@ final class NL2Tag
     }
 
     /**
-     * Function to wrap changelog line in the appropriate list item
+     * Function to wrap changelog line in the appropriate list item.
      *
      * @param string $string         Changelog line
      * @param string $changelog_type Changelog type
@@ -657,7 +657,7 @@ final class NL2Tag
      */
     private function wrapChangelog(string $string, string $changelog_type): string
     {
-        if (!\in_array($changelog_type, ['*', '+', '-'])) {
+        if (!\in_array($changelog_type, ['*', '+', '-'], true)) {
             throw new \UnexpectedValueException('Unsupported changelog type `'.$changelog_type.'` provided.');
         }
 
@@ -669,7 +669,7 @@ final class NL2Tag
     }
 
     /**
-     * Function to remove character for the changelog type from string
+     * Function to remove character for the changelog type from string.
      *
      * @param string $string
      *
@@ -681,7 +681,7 @@ final class NL2Tag
     }
 
     /**
-     * Function to "close" previously opened tags, while we are iterating
+     * Function to "close" previously opened tags, while we are iterating.
      *
      * @param array $unclosed_previous Previously unclosed tags
      * @param array $unclosed_current  Currently unclosed tags
@@ -709,7 +709,7 @@ final class NL2Tag
     }
 
     /**
-     * Function to update the list of unclosed tags
+     * Function to update the list of unclosed tags.
      *
      * @param array $unclosed_previous Previously unclosed tags
      * @param array $unclosed_current  Currently unclosed tags
@@ -730,7 +730,7 @@ final class NL2Tag
     }
 
     /**
-     * Function to trim new lines from beginning and end of string
+     * Function to trim new lines from beginning and end of string.
      *
      * @param string $string
      *
@@ -742,7 +742,7 @@ final class NL2Tag
     }
 
     /**
-     * Function to trim `<br>` from beginning and end of string
+     * Function to trim `<br>` from beginning and end of string.
      *
      * @param string $string
      *
@@ -754,7 +754,7 @@ final class NL2Tag
     }
 
     /**
-     * Function to collapse new lines
+     * Function to collapse new lines.
      *
      * @param string $string
      *
@@ -776,7 +776,7 @@ final class NL2Tag
     }
 
     /**
-     * Function to check if string has any new lines
+     * Function to check if string has any new lines.
      *
      * @param string $string
      *
@@ -790,7 +790,7 @@ final class NL2Tag
     }
 
     /**
-     * Function to check if string is already wrapped in a tag
+     * Function to check if string is already wrapped in a tag.
      *
      * @param string $string String to check
      * @param string $tag    Tag to check against
@@ -803,7 +803,7 @@ final class NL2Tag
     }
 
     /**
-     * Function to check if list of unclosed tags has those that require preservation of new lines
+     * Function to check if list of unclosed tags has those that require preservation of new lines.
      *
      * @param array $open_tags
      *
@@ -815,7 +815,7 @@ final class NL2Tag
     }
 
     /**
-     * Function to check if we have open wrapper tags
+     * Function to check if we have open wrapper tags.
      *
      * @param array $open_tags
      *
@@ -827,7 +827,7 @@ final class NL2Tag
     }
 
     /**
-     * Function to check if we have open wrapper tags
+     * Function to check if we have open wrapper tags.
      *
      * @param array $open_tags
      *
@@ -839,7 +839,7 @@ final class NL2Tag
     }
 
     /**
-     * Generalized function to check if currently open tags has any tag from a list
+     * Generalized function to check if currently open tags has any tag from a list.
      *
      * @param array $open_tags Currently open tags
      * @param array $list      List of tags to check against
@@ -854,7 +854,7 @@ final class NL2Tag
     }
 
     /**
-     * Function to check if string has non-phrasing content tags
+     * Function to check if string has non-phrasing content tags.
      *
      * @param string $string
      *
@@ -868,7 +868,7 @@ final class NL2Tag
     }
 
     /**
-     * Function to check if string has non-phrasing content tags
+     * Function to check if string has non-phrasing content tags.
      *
      * @param string $string
      *
@@ -882,7 +882,7 @@ final class NL2Tag
     }
 
     /**
-     * Function to check if string has unclosed tags
+     * Function to check if string has unclosed tags.
      *
      * @param string $string
      *
