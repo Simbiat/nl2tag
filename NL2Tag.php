@@ -304,14 +304,16 @@ final class NL2Tag
     {
         // Force lower case for a wrapper type
         $wrapper = \mb_strtolower($wrapper, 'UTF-8');
-        if (!\in_array($wrapper, ['p', 'li', 'br'], true)) {
+        if (!\in_array($wrapper, ['p', 'li', 'br'], strict: true)) {
             throw new \UnexpectedValueException('Unsupported wrapper tag type `'.$wrapper.'` provided.');
         }
+
         // Force lower case for list type
         $list_type = \mb_strtolower($list_type, 'UTF-8');
-        if (!\in_array($list_type, ['menu', 'ol', 'ul'], true)) {
+        if (!\in_array($list_type, ['menu', 'ol', 'ul'], strict: true)) {
             throw new \UnexpectedValueException('Unsupported list type `'.$list_type.'` provided.');
         }
+
         // Trim new lines
         $string = $this->trimNewLines($string);
         // Clean up whitespace between tags inside wrappers (if any) to prevent extra newlines
@@ -322,12 +324,14 @@ final class NL2Tag
                 // Return as is
                 return $string;
             }
+
             if ($wrapper === 'p') {
                 // Check if string has non-phrasing content
                 if ($this->hasNonPhrasing($string)) {
                     // Return as is
                     return $string;
                 }
+
                 // Check if already wrapped
                 if ($this->isWrapped($string)) {
                     // Return as is
@@ -337,29 +341,31 @@ final class NL2Tag
                 // Return wrapped in <p>
                 return '<p>'.$string.'</p>';
             }
-            if ($wrapper === 'li') {
-                // Check if string has non-flow content
-                if ($this->hasNonFlow($string)) {
-                    // Return as is
-                    return $string;
-                }
-                // Check if it's already a list
-                if (
-                    $this->isWrapped($string, 'ul')
-                    || $this->isWrapped($string, 'ol')
-                    || $this->isWrapped($string, 'menu')
-                ) {
-                    // Return as is
-                    return $string;
-                }
-                // Return wrapped in list type and <li>
-                if ($changelog) {
-                    return '<'.$list_type.' class="changelog_list"><li class="changelog_change">'.$string.'</li></'.$list_type.'>';
-                }
 
-                return '<'.$list_type.'><li>'.$string.'</li></'.$list_type.'>';
+            // Check if string has non-flow content
+            if ($this->hasNonFlow($string)) {
+                // Return as is
+                return $string;
             }
+
+            // Check if it's already a list
+            if (
+                $this->isWrapped($string, 'ul')
+                || $this->isWrapped($string, 'ol')
+                || $this->isWrapped($string, 'menu')
+            ) {
+                // Return as is
+                return $string;
+            }
+
+            // Return wrapped in list type and <li>
+            if ($changelog) {
+                return '<'.$list_type.' class="changelog_list"><li class="changelog_change">'.$string.'</li></'.$list_type.'>';
+            }
+
+            return '<'.$list_type.'><li>'.$string.'</li></'.$list_type.'>';
         }
+
         // Check if it's already a paragraph or list
         if (
             (
@@ -377,6 +383,7 @@ final class NL2Tag
             // Return as is
             return $string;
         }
+
         // Split the string by new lines
         $split_string = \preg_split('/('.self::NEW_LINES_REGEX.')+/ui', $string, -1, \PREG_SPLIT_DELIM_CAPTURE);
         // Prepare some variables
@@ -387,6 +394,7 @@ final class NL2Tag
         } else {
             $new_string = '';
         }
+
         $between_tags_string = '';
         $unclosed_previous = [];
         $has_not_allowed = false;
@@ -394,7 +402,7 @@ final class NL2Tag
         // Process line by line
         foreach ($split_string as $part) {
             // Check if string has non-flow (for lists) or non-phrasing (for paragraphs) content. This is not required for <br>
-            if (\in_array($wrapper, ['p', 'li'], true)) {
+            if (\in_array($wrapper, ['p', 'li'], strict: true)) {
                 $has_not_allowed_current = match ($wrapper) {
                     'p' => $this->hasNonPhrasing($part),
                     'li' => $this->hasNonFlow($part),
@@ -407,6 +415,7 @@ final class NL2Tag
                     $has_not_allowed = true;
                 }
             }
+
             // Check if string has any non-closed tags
             $unclosed_current = $this->hasUnclosedTags($part);
             if (
@@ -416,11 +425,12 @@ final class NL2Tag
                 // Get the changelog type
                 $changelog_type = $this->getChangelogType($between_tags_string.$part);
             }
+
             // Check if we have any unmatched tags on either current or previous line
             if (
                 empty($unclosed_current['opening'])
                 && empty($unclosed_current['closing'])
-                && empty($unclosed_previous)
+                && $unclosed_previous === []
             ) {
                 // Check if the line is a set of newlines or other whitespace
                 if (\preg_match('/^('.self::NEW_LINES_REGEX.'|\s|\p{C})*$/ui', $part) === 1) {
@@ -428,6 +438,7 @@ final class NL2Tag
                     // Essentially it means that this is just the captured delimiter from the split
                     continue;
                 }
+
                 // And if it has only allowed content
                 if ($has_not_allowed) {
                     // Add the current string as is
@@ -466,17 +477,19 @@ final class NL2Tag
                         $new_string .= '<li>'.$this->trimBRs($part).'</li>';
                     }
                 }
+
                 // Reset the flag for non-flow/non-phrasing content
                 $has_not_allowed = false;
 
                 continue;
             }
+
             // If we have unmatched closing tags on current line, check if we had any unmatched opening tags on previous line(s)
             $this->closeUnclosed($unclosed_previous, $unclosed_current);
             // Add any current unmatched opening tags to list of previously unmatched ones
             $this->updateUnclosed($unclosed_previous, $unclosed_current);
             // Check if we still have some unclosed tags
-            if (empty($unclosed_previous)) {
+            if ($unclosed_previous === []) {
                 // Add all previously saved parts and the current part to the new string
                 if ($wrapper === 'br') {
                     $new_string .= $this->trimBRs($between_tags_string.$part).'<br>';
@@ -512,6 +525,7 @@ final class NL2Tag
                         $new_string .= '<li>'.$this->trimBRs($between_tags_string.$part).'</li>';
                     }
                 }
+
                 // Reset between tags string
                 $between_tags_string = '';
                 // Reset flag for non-flow/non-phrasing content
@@ -535,10 +549,12 @@ final class NL2Tag
                 $between_tags_string .= $part;
             }
         }
+
         // It is possible, that even when we iterate over all lines, some unclosed tags remain. In such a case, we keep the rest of the text as is
-        if (!empty($unclosed_previous)) {
+        if ($unclosed_previous !== []) {
             $new_string .= $between_tags_string;
         }
+
         // If we had any sub-lists, there will be an unclosed ul, which we need to close
         if (
             $wrapper === 'li'
@@ -547,14 +563,17 @@ final class NL2Tag
         ) {
             $new_string .= '</ul>';
         }
+
         // Trim potentially excessive <br> tags
         $new_string = $this->trimBRs($new_string);
         if ($this->collapse_new_lines) {
             $new_string = $this->collapseNewLines($new_string);
         }
+
         if ($wrapper === 'li') {
             $new_string .= '</ul>';
         }
+
         // Clean up potential extra <br> tags between <p> or <li> elements
         $new_string = \preg_replace('/(<\/(?>p|li)>)(?>(?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<\/?br\s*\/?\s*>)*((?>'.self::NEW_LINES_REGEX.'|\s|\p{C})*<(?>p|li)(?>\s+|>))/ui', '$1$2', $new_string);
         // Do the same for </li> followed by </ul>, </ol> or </menu>
@@ -593,6 +612,7 @@ final class NL2Tag
             /** @noinspection HtmlRequiredLangAttribute */
             $string = '<html>'.$string.'</html>';
         }
+
         $html = new \DOMDocument(encoding: 'UTF-8');
         // mb_encode_numericentity is done as per workaround for UTF-8 loss/corruption on load from https://stackoverflow.com/questions/8218230/php-domdocument-loadhtml-not-encoding-utf-8-correctly
         // LIBXML_HTML_NOIMPLIED and LIBXML_HTML_NOTED to avoid adding wrappers (html, body, DTD). This will also allow fewer issues in case string has both regular HTML and some regular text (outside any tags). LIBXML_NOBLANKS to remove empty tags if any. LIBXML_PARSEHUGE to allow processing of larger strings. LIBXML_COMPACT for some potential optimization. LIBXML_NOWARNING and LIBXML_NOERROR to suppress warning in case of malformed HTML. LIBXML_NONET to protect from unsolicited connections to external sources.
@@ -617,6 +637,7 @@ final class NL2Tag
                 $br_element->parentNode->replaceChild($newline_text_node, $br_element);
             }
         }
+
         // Get the cleaned HTML
         $cleaned_html = $html->saveHTML();
         // Strip the excessive HTML tags if we added them
@@ -657,7 +678,7 @@ final class NL2Tag
      */
     private function wrapChangelog(string $string, string $changelog_type): string
     {
-        if (!\in_array($changelog_type, ['*', '+', '-'], true)) {
+        if (!\in_array($changelog_type, ['*', '+', '-'], strict: true)) {
             throw new \UnexpectedValueException('Unsupported changelog type `'.$changelog_type.'` provided.');
         }
 
@@ -684,7 +705,7 @@ final class NL2Tag
      * Function to "close" previously opened tags, while we are iterating.
      *
      * @param array $unclosed_previous Previously unclosed tags
-     * @param array $unclosed_current  Currently unclosed tags
+     * @param array<string, mixed> $unclosed_current Currently unclosed tags
      *
      * @return void
      */
@@ -692,7 +713,7 @@ final class NL2Tag
     {
         if (
             !empty($unclosed_current['closing'])
-            && !empty($unclosed_previous)
+            && $unclosed_previous !== []
         ) {
             foreach ($unclosed_current['closing'] as $tag => $count) {
                 if (isset($unclosed_previous[$tag])) {
@@ -712,7 +733,7 @@ final class NL2Tag
      * Function to update the list of unclosed tags.
      *
      * @param array $unclosed_previous Previously unclosed tags
-     * @param array $unclosed_current  Currently unclosed tags
+     * @param array<string, mixed> $unclosed_current Currently unclosed tags
      *
      * @return void
      */
@@ -850,7 +871,7 @@ final class NL2Tag
     {
         $open_tags = \array_keys($open_tags);
 
-        return \array_any($open_tags, static fn($tag) => \in_array(\mb_strtolower($tag, 'UTF-8'), $list, true));
+        return \array_any($open_tags, static fn(int|string $tag): bool => \in_array(\mb_strtolower($tag, 'UTF-8'), $list, strict: true));
     }
 
     /**
@@ -901,25 +922,27 @@ final class NL2Tag
             // Get the real tag name
             $tag = \mb_strtolower(\preg_replace('/<([a-zA-Z\-]+)(\s*\/?| [^<>]+)?>/ui', '$1', $tag), 'UTF-8');
             // Check if self-closing
-            if (\in_array($tag, self::VOID_ELEMENTS, true)) {
+            if (\in_array($tag, self::VOID_ELEMENTS, strict: true)) {
                 // Remove from the array
                 unset($opening_tags[$key]);
             } else {
                 $opening_tags[$key] = $tag;
             }
         }
+
         // Remove all self-closing tags from closing tags
         foreach ($closing_tags as $key => $tag) {
             // Get the real tag name
             $tag = \mb_strtolower(\preg_replace('/<\/([a-zA-Z\-]+)\s*>/ui', '$1', $tag), 'UTF-8');
             // Check if self-closing
-            if (\in_array($tag, self::VOID_ELEMENTS, true)) {
+            if (\in_array($tag, self::VOID_ELEMENTS, strict: true)) {
                 // Remove from the array
                 unset($closing_tags[$key]);
             } else {
                 $closing_tags[$key] = $tag;
             }
         }
+
         // Count unique tags
         $unique_tags = [
             'closing' => \array_count_values($closing_tags),
@@ -934,6 +957,7 @@ final class NL2Tag
                 unset($unique_tags['opening'][$tag], $unique_tags['closing'][$tag]);
             }
         }
+
         // Do the same for the closing tags, too. Not sure if we can get any "hits" on this cycle, but my gut feeling says, that we better check
         foreach ($unique_tags['closing'] as $tag => $count) {
             if (
