@@ -608,8 +608,7 @@ final class NL2Tag
         if (\preg_match('/^\s*<html( [^<>]*)?>.*<\/html>\s*$/uis', $string) === 1) {
             $wrapped_in_html = true;
         } else {
-            // Suppressing inspection, since we do not need the language for the purpose of the library
-            /** @noinspection HtmlRequiredLangAttribute */
+            /** @noinspection HtmlRequiredLangAttribute -- Suppressing inspection, since we do not need the language for the purpose of the library*/
             $string = '<html>'.$string.'</html>';
         }
 
